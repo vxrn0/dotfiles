@@ -16,6 +16,8 @@ Install: `git clone <repo> ~/dotfiles && ~/dotfiles/extras/install.sh`
 - `.config/quickshell/dotfiles/` — the shell. Upstream code; changes stay small and hand-merged.
 - `.config/matugen/` — wallpaper color pipeline. Its outputs are not authored by hand.
 - `extras/mango/` — MangoWM port, parked and not installed; see its README before touching it.
+- `scripts/check.sh` — local CI: shell syntax, tracked secrets, README preview, `install.sh --help`.
+  `tests/test_config.sh` is what it runs.
 
 ## Conventions
 
