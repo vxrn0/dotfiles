@@ -1,0 +1,3 @@
+For website creation, frontend implementation, or meaningful UI redesign, load the `creative-frontend` skill before coding. Invoke it as `/creative-frontend` when you want it explicitly; it is also available for matching web tasks. Inspect the real page at desktop and mobile sizes and revise from the rendered screenshots. Keep project-specific art direction in the project.
+
+For the established environment, verified limits, creative-development principles, and explicit future roadmap, consult `/home/aiden/.agents/creative-frontend-context.md` when planning related work. Treat roadmap items as unimplemented unless separately verified.

@@ -223,6 +223,11 @@ say "editor"
 npm config set prefix "$HOME/.local" >/dev/null 2>&1 || true
 npm install -g monaco-editor || FAILED+=("monaco-editor")
 
+say "opencode plugins"
+if [ -f "$HOME/.config/opencode/package.json" ]; then
+    ( cd "$HOME/.config/opencode" && npm install --silent ) || FAILED+=("opencode-plugins")
+fi
+
 say "shell and services"
 if systemctl list-unit-files sddm.service >/dev/null 2>&1; then
     sudo systemctl enable sddm

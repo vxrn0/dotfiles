@@ -3,3 +3,11 @@ extras/fish_variables
 *.bak
 __pycache__/
 *.pyc
+telegram-bot/worker/.dev.vars
+telegram-bot/worker/.wrangler/
+telegram-bot/worker/node_modules/
+telegram-bot/bridge/bin/
+.backups/
+.config/opencode/node_modules/
+.config/opencode/service.json
+.config/opencode/.ponytail-active
