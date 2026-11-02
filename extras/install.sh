@@ -53,7 +53,6 @@ fi
 for f in \
     "$REPO/.config/hypr/hyprland/colors.lua" \
     "$REPO/.config/kitty/colors.conf" \
-    "$REPO/.config/mango/colors.conf" \
     "$REPO/extras/dotfiles-config.json" \
     "$REPO/extras/install.sh" \
     "$REPO/extras/build-dynamic-cursors.sh" \
