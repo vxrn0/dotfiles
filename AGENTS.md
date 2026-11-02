@@ -3,102 +3,48 @@
 Personal XDG config for a Hyprland + Quickshell desktop on Arch. The shell is called `dotfiles`.
 Plain files. Derived from dots-hyprland; see `README.md` for credit and license.
 
-## Restore on a fresh install
-
-```sh
-git clone <repo> ~/dotfiles && ~/dotfiles/extras/install.sh
-```
-
-The script installs packages (repo and AUR), flatpaks, configs, fonts, the SDDM theme, `gray` and
-`monaco-editor`, then enables `sddm`, `NetworkManager`, `bluetooth` and `fstrim.timer`.
-
-It runs a preflight before touching anything: the system must be fully updated, every package must
-resolve in a repository or the AUR, every flatpak must exist on flathub, the gray release must be
-downloadable, the vendored assets and colour seeds must be present, and there must be at least 4 GB
-free. `--check` runs only that preflight, `--dry-run` prints the plan. `extras/verify.sh` checks the
-result after installing and exits non-zero if anything is missing.
-
-`gray` is the AI panel backend. It is not packaged; the script downloads the latest `vstaln/gray`
-release, verifies it against `SHA256SUMS` and installs it to `~/.local/bin/gray`.
-
-Quickshell comes from `extra`, not from an `illogical-impulse` package: 0.3.2 is the version the shell
-runs on. Arch rebuilds it after Qt upgrades; until that rebuild lands, the shell can crash on the
-new Qt, so keep it updated.
-
-Not installable from a package, therefore vendored: `Google Sans Flex` in
-`extras/fonts/google-sans-flex/` (the `main`, `title` and `numbers` font) and the SDDM theme
-`pixie` in `extras/sddm/pixie/`.
-
-Icons need one generated font too, because Qt ignores variable font axes in Quickshell and the
-filled Material Symbols weight has to be baked in. Restart the shell after running it:
-
-```sh
-./extras/make-material-symbols-filled.py   # writes ~/.local/share/fonts/material-symbols-filled/
-```
-
-The editor is `monaco`: `.local/bin/monaco` plus `.local/share/monaco-editor/` are in this repo and
-need `node` and the global npm package:
-
-```sh
-npm install -g monaco-editor
-```
-The launcher resolves the package with `npm root -g`, so node can come from pacman or `~/.local/node`.
-
-First boot does not depend on matugen: `hyprland/colors.lua`, `kitty/colors.conf`
-and the GTK css are committed as seeds and are overwritten on the first wallpaper change.
-`~/.config/dotfiles/config.json` is not committed; the shell writes defaults on first start, and
-`extras/install.sh` seeds it from `extras/dotfiles-config.json` when it is missing.
+Install: `git clone <repo> ~/dotfiles && ~/dotfiles/extras/install.sh`
+(`--check` = preflight only, `--dry-run` = plan; `extras/verify.sh` checks the result).
 
 ## Layout
 
 - `.config/` — the XDG config tree, mirrors `~/.config`.
-- `extras/` — everything a fresh install needs beyond the config tree: `install.sh`, the package
-  lists, vendored fonts and the SDDM theme.
-- `.config/hypr/hyprland/*.lua` — Hyprland config (Lua, not hyprlang).
-- `extras/mango/` — MangoWM port of the Hyprland config, parked and not installed. It broke the
-  session when booted; see `extras/mango/README.md`.
-- `.config/hypr/custom/*.lua` — upstream override hooks. Keep these header-only: personal
-  tweaks go straight into `hyprland/*.lua` so there is one source of truth.
+- `extras/` — everything else a fresh install needs: `install.sh`, package lists, vendored
+  fonts, the SDDM theme, `mango/`.
+- `.config/hypr/hyprland/*.lua` — Hyprland config (Lua, not hyprlang). Tweaks go here, not into
+  the header-only `custom/*.lua` hooks.
 - `.config/quickshell/dotfiles/` — the shell. Upstream code; changes stay small and hand-merged.
 - `.config/matugen/` — wallpaper color pipeline. Its outputs are not authored by hand.
-
-## Names
-
-The shell name `dotfiles` appears in several places and they must stay in sync:
-
-- directory `.config/quickshell/dotfiles/`
-- shell state directory `~/.config/dotfiles/`, which holds `config.json` and is written by the shell
-- `hl.env("qsConfig", "dotfiles")` in `hyprland/variables.lua`, used as `qs -c $qsConfig`
-- `QUICKSHELL_CONFIG_NAME` in `scripts/colors/switchwall.sh` and `scripts/colors/applycolor.sh`
-- the fish alias `q 'qs -c dotfiles'`
+- `extras/mango/` — MangoWM port, parked and not installed; see its README before touching it.
 
 ## Conventions
 
-- Everything in the repo is written in English.
-- Commits are authored as `vxrn <vxrn@tutamail.com>`.
-- Do not stage or copy secrets or machine state: dotfile sources are the config that was written
-  by hand, not browser profiles, credentials, `fish_variables`, thumbnails, or app caches.
-- Generated, do not hand-edit: `.config/hypr/hyprland/colors.lua`,
-  `.config/hypr/hyprlock/colors.conf`, `.config/kitty/colors.conf`,
-  `.config/gtk-3.0/gtk.css`, `.config/gtk-4.0/gtk.css`.
-  They are committed only as first-boot seeds; matugen overwrites them.
-- Terminal is kitty, file manager is Nautilus, editor is `~/.local/bin/monaco`. Launcher and
-  power menu come from Quickshell.
-- There is no zsh, foot, konsole, fuzzel, wlogout, mpv, dolphin, Kvantum or waffle panel
-  family support. Do not reintroduce them as fallbacks.
+- Everything is written in English. Commits are authored as `vxrn <vxrn@tutamail.com>`.
+- Never stage secrets or machine state: browser profiles, credentials, `fish_variables`, caches.
+- Generated, do not hand-edit: `hyprland/colors.lua`, `hyprlock/colors.conf`, `kitty/colors.conf`,
+  `gtk-3.0/gtk.css`, `gtk-4.0/gtk.css`. They are committed only as first-boot seeds.
+- Terminal is kitty, file manager is Nautilus, editor is `~/.local/bin/monaco`, launcher and power
+  menu come from the shell.
+- No zsh, foot, konsole, fuzzel, wlogout, mpv, dolphin, Kvantum or waffle panel. Do not
+  reintroduce them as fallbacks.
+- The name `dotfiles` must stay in sync in `hl.env("qsConfig")`, `QUICKSHELL_CONFIG_NAME` in the
+  color scripts, and the fish alias `q`.
+
+## Extras that need a manual step
+
+- `gray` (AI panel backend) and `monaco-editor` come from `extras/install.sh`; the editor also
+  needs `npm install -g monaco-editor`.
+- `extras/make-material-symbols-filled.py` bakes the filled icon weight; restart the shell after it.
+- `extras/build-dynamic-cursors.sh` rebuilds the cursor plugin and must be rerun after every
+  Hyprland update, or the plugin will not load.
 
 ## Verify
 
 ```sh
-for f in .config/hypr/hyprland/*.lua .config/hypr/hyprland/services/*.lua .config/hypr/custom/*.lua; do luac -p "$f"; done
+for f in .config/hypr/hyprland/*.lua .config/hypr/custom/*.lua; do luac -p "$f"; done
 bash -n .config/quickshell/dotfiles/scripts/colors/switchwall.sh
-bash -n extras/mango/autostart.sh
-mango -p -c extras/mango/config.conf
-bash -n extras/install.sh
-bash -n extras/verify.sh
-./extras/install.sh --check
-python3 -m py_compile extras/make-material-symbols-filled.py
 python3 -c "import tomllib;tomllib.load(open('.config/matugen/config.toml','rb'))"
+./extras/install.sh --check
 grep -rIn "illogical\|waffle\|quickshell/ii" .config
 git grep -lP '[\x{0400}-\x{04FF}]' -- ':!*.ttf' ':!*.png' ':!*.jpg'
 ```
