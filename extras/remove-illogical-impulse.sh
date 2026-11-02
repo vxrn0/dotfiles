@@ -14,13 +14,24 @@ if ! pacman -Qq | grep -q '^illogical-impulse'; then
     exit 0
 fi
 
-echo "== marking packages that must survive as explicitly installed"
-sudo pacman -D --asexplicit $KEEP
+installed="$(pacman -Qq)"
+mark=()
+for p in $KEEP; do
+    grep -qx "$p" <<<"$installed" && mark+=("$p")
+done
+
+echo "== marking ${#mark[@]} packages that must survive as explicitly installed"
+sudo pacman -D --asexplicit "${mark[@]}"
 
 echo "== replacing the cursor theme"
 if pacman -Qq | grep -qx illogical-impulse-bibata-modern-classic-bin; then
+    if ! command -v paru >/dev/null && ! command -v yay >/dev/null; then
+        echo "paru or yay is required to install bibata-cursor-theme" >&2
+        exit 1
+    fi
+    helper="$(command -v paru >/dev/null && echo paru || echo yay)"
     sudo pacman -R --noconfirm illogical-impulse-bibata-modern-classic-bin
-    paru -S --needed --noconfirm bibata-cursor-theme
+    "$helper" -S --needed --noconfirm bibata-cursor-theme
 fi
 
 echo "== removing the metapackages"
@@ -31,10 +42,10 @@ pacman -Qdtq || true
 
 cat <<'EOF'
 
-Next: check that list. Safe to drop: fuzzel, wlogout, breeze-plus, darkly-bin,
+Next: review that list. Safe to drop: fuzzel, wlogout, breeze-plus, darkly-bin,
 translate-shell, ttf-readex-pro, ttf-rubik-vf, ttf-twemoji, wtype, go-yq,
 gtksourceviewmm, gamemode, dart-sass, glusterfs.
 
 Run: sudo pacman -Rns <those names>
-Then: ./extras/verify.sh
+Then: ~/extra/git/dotfiles/extras/verify.sh
 EOF

@@ -10,7 +10,6 @@ import Quickshell.Bluetooth
 import Quickshell.Hyprland
 
 import qs.modules.dotfiles.sidebarRight.notifications
-import qs.modules.dotfiles.sidebarRight.quickToggles
 import qs.modules.dotfiles.sidebarRight.quickToggles.classicStyle
 
 import qs.modules.dotfiles.sidebarRight.bluetoothDevices
