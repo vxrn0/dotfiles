@@ -1,6 +1,8 @@
 # dotfiles
 
-Hyprland + Quickshell on Arch. MangoWM port included, untested.
+![Hyprland + Quickshell desktop](docs/preview.webp)
+
+Hyprland + Quickshell on Arch. A MangoWM port is parked in `extras/mango/`, not installed.
 
 ```sh
 git clone https://github.com/xvxrn/dotfiles ~/dotfiles && ~/dotfiles/extras/install.sh
