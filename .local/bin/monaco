@@ -7,7 +7,24 @@ LOG="$HOME/.local/state/monaco-editor/timing.log"
 mkdir -p "$(dirname "$LOG")"
 echo "$(date +%s%3N) launch" >> "$LOG"
 
-MODULES="$(npm root -g 2>/dev/null || echo "$HOME/.local/node/lib/node_modules")"
+MODULES=""
+for candidate in \
+    "$(npm root -g 2>/dev/null)" \
+    "$HOME/.local/node/lib/node_modules" \
+    "$HOME/.local/lib/node_modules" \
+    /usr/lib/node_modules
+do
+    if [ -n "$candidate" ] && [ -f "$candidate/monaco-editor/min/vs/loader.js" ]; then
+        MODULES="$candidate"
+        break
+    fi
+done
+
+if [ -z "$MODULES" ]; then
+    echo "monaco: monaco-editor is not installed, run: npm install -g monaco-editor" >&2
+    exit 1
+fi
+
 ln -sfn "$MODULES/monaco-editor/min/vs" "$DIR/vs"
 
 if ! curl -sf -o /dev/null "$URL/"; then
