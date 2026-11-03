@@ -11,6 +11,12 @@ Singleton {
         return validImageExtensions.some(t => name.endsWith(`.${t}`));
     }
 
+    readonly property list<string> validVideoExtensions: ["mp4", "webm", "mkv", "avi", "mov"]
+
+    function isVideoByName(name: string): bool {
+        return validVideoExtensions.some(t => name.endsWith(`.${t}`));
+    }
+
     // Thumbnails
     // https://specifications.freedesktop.org/thumbnail-spec/latest/directory.html
     readonly property var thumbnailSizes: ({

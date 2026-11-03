@@ -19,11 +19,16 @@ Singleton {
     property string generateThumbnailsMagickScriptPath: `${FileUtils.trimFileProtocol(Directories.scriptPath)}/thumbnails/generate-thumbnails-magick.sh`
     property alias directory: folderModel.folder
     readonly property string effectiveDirectory: FileUtils.trimFileProtocol(folderModel.folder.toString())
-    property url defaultFolder: Qt.resolvedUrl(`${Directories.pictures}/Wallpapers`)
+    // Open where the current wallpaper lives; that is the folder the user actually browses
+    property url defaultFolder: Config.options.wallpaper.path.length > 0
+        ? Qt.resolvedUrl(FileUtils.parentDirectory(Config.options.wallpaper.path))
+        : Qt.resolvedUrl(`${Directories.pictures}/Wallpapers`)
     property alias folderModel: folderModel // Expose for direct binding when needed
     property string searchQuery: ""
-    readonly property list<string> extensions: [ // TODO: add videos
-        "jpg", "jpeg", "png", "webp", "avif", "bmp", "svg"
+    readonly property list<string> extensions: [
+        "jpg", "jpeg", "png", "webp", "avif", "bmp", "svg",
+        // switchwall.sh hands these to mpvpaper
+        "mp4", "webm", "mkv", "avi", "mov"
     ]
     property list<string> wallpapers: [] // List of absolute file paths (without file://)
     readonly property bool thumbnailGenerationRunning: thumbgenProc.running
@@ -88,20 +93,23 @@ Singleton {
         }
         stdout: StdioCollector {
             onStreamFinished: {
-                    root.directory = Qt.resolvedUrl(validateDirProc.nicePath)
                 const result = text.trim()
-                if (result === "dir") {
-                } else if (result === "file") {
-                    root.directory = Qt.resolvedUrl(FileUtils.parentDirectory(validateDirProc.nicePath))
-                } else {
-                    // Ignore
-                }
+                const target = result === "invalid"
+                    // A missing folder must not leave the grid empty: open Pictures instead
+                    ? FileUtils.trimFileProtocol(Directories.pictures)
+                    : result === "file"
+                        ? FileUtils.parentDirectory(validateDirProc.nicePath)
+                        : validateDirProc.nicePath
+                root.directory = Qt.resolvedUrl(target)
             }
         }
     }
+
     function setDirectory(path) {
         validateDirProc.setDirectoryIfValid(path)
     }
+
+    Component.onCompleted: setDirectory(FileUtils.trimFileProtocol(defaultFolder))
     function navigateUp() {
         folderModel.navigateUp()
     }

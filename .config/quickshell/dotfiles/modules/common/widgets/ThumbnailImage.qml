@@ -42,8 +42,14 @@ StyledImage {
         id: thumbnailGeneration
         command: {
             const maxSize = Images.thumbnailSizes[root.thumbnailSizeName];
-            return ["bash", "-c", 
-                `[ -f '${FileUtils.trimFileProtocol(root.thumbnailPath)}' ] && exit 0 || { magick '${root.sourcePath}' -resize ${maxSize}x${maxSize} '${FileUtils.trimFileProtocol(root.thumbnailPath)}' && exit 1; }`
+            const outputPath = FileUtils.trimFileProtocol(root.thumbnailPath);
+            // Videos get a poster frame; ImageMagick cannot read them here.
+            const generate = Images.isVideoByName(root.sourcePath)
+                ? `ffmpeg -y -loglevel error -ss 1 -i '${root.sourcePath}' -frames:v 1 `
+                    + `-vf "scale=${maxSize}:${maxSize}:force_original_aspect_ratio=decrease" '${outputPath}'`
+                : `magick '${root.sourcePath}' -resize ${maxSize}x${maxSize} '${outputPath}'`;
+            return ["bash", "-c",
+                `[ -f '${outputPath}' ] && exit 0 || { ${generate} && exit 1; }`
             ]
         }
         onExited: (exitCode, exitStatus) => {

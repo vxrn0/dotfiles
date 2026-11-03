@@ -10,7 +10,8 @@ MouseArea {
     id: root
     required property var fileModelData
     property bool isDirectory: fileModelData.fileIsDir
-    property bool useThumbnail: Images.isValidImageByName(fileModelData.fileName)
+    property bool isVideo: Images.isVideoByName(fileModelData.fileName)
+    property bool useThumbnail: Images.isValidImageByName(fileModelData.fileName) || root.isVideo
 
     property alias colBackground: background.color
     property alias colText: wallpaperItemName.color
@@ -60,7 +61,7 @@ MouseArea {
                     active: root.useThumbnail
                     sourceComponent: ThumbnailImage {
                         id: thumbnailImage
-                        generateThumbnail: false
+                        generateThumbnail: root.isVideo
                         sourcePath: fileModelData.filePath
 
                         cache: false
@@ -96,10 +97,23 @@ MouseArea {
 
                 Loader {
                     id: iconLoader
-                    active: !root.useThumbnail
+                    // Also shown while a video poster is still being extracted
+                    active: !root.useThumbnail || thumbnailImageLoader.item?.status !== Image.Ready
                     anchors.fill: parent
-                    sourceComponent: DirectoryIcon {
-                        fileModelData: root.fileModelData
+                    sourceComponent: Item {
+                        // DirectoryIcon used Quickshell.iconPath, which cannot resolve folder
+                        // icons here and painted a magenta checkerboard. A glyph is enough.
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Appearance.rounding.small
+                            color: Appearance.colors.colLayer1
+                        }
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: root.isDirectory ? "folder" : root.isVideo ? "movie" : "draft"
+                            iconSize: Math.min(parent.width, parent.height) * 0.85
+                            color: root.colText
+                        }
                     }
                 }
             }

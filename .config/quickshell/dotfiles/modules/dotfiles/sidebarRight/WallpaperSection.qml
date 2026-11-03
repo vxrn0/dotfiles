@@ -54,7 +54,13 @@ Rectangle {
                 implicitHeight: 40
                 buttonRadius: Appearance.rounding.small
                 colBackground: Appearance.colors.colLayer2
-                onClicked: GlobalStates.wallpaperSelectorOpen = true
+                onClicked: {
+                    // Respect the same choice the Super+N shortcut and the IPC handler use
+                    if (Config.options.wallpaperSelector.useSystemFileDialog)
+                        Wallpapers.openFallbackPicker(root.dark)
+                    else
+                        GlobalStates.wallpaperSelectorOpen = true
+                }
 
                 Image {
                     id: wallpaperThumbnail

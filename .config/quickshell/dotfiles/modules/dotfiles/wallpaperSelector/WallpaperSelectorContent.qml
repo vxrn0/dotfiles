@@ -16,6 +16,14 @@ MouseArea {
     property real previewCellAspectRatio: 4 / 3
     property bool useDarkMode: Appearance.m3colors.darkmode
 
+    // Start in the folder of the current wallpaper. The singleton's own default runs before
+    // Config is ready, so the picker would otherwise fall back to Pictures every time.
+    Component.onCompleted: Wallpapers.setDirectory(FileUtils.trimFileProtocol(
+        Config.options.wallpaper.path.length > 0
+            ? FileUtils.parentDirectory(Config.options.wallpaper.path)
+            : Directories.pictures
+    ))
+
     function updateThumbnails() {
         const totalImageMargin = (Appearance.sizes.wallpaperSelectorItemMargins + Appearance.sizes.wallpaperSelectorItemPadding) * 2;
         const thumbnailSizeName = Images.thumbnailSizeNameForDimensions(grid.cellWidth - totalImageMargin, grid.cellHeight - totalImageMargin);

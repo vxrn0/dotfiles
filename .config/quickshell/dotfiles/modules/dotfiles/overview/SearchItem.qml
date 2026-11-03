@@ -252,6 +252,39 @@ RippleButton {
             text: root.itemClickActionName
         }
 
+        RowLayout { // Per-entry buttons: clipboard copy/delete
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: root.buttonVerticalPadding
+            Layout.bottomMargin: -root.buttonVerticalPadding
+            spacing: 4
+            visible: actionRepeater.count > 0
+
+            Repeater {
+                id: actionRepeater
+                // Only built-in actions are shown. Desktop-entry actions (app window actions)
+                // render as identical gear icons and add nothing here.
+                model: (root.entry?.actions ?? []).filter(action =>
+                    action.iconType === LauncherSearchResult.IconType.Material).slice(0, 4)
+
+                delegate: RippleButton {
+                    id: actionButton
+                    required property var modelData
+                    implicitHeight: 34
+                    implicitWidth: 34
+                    colBackgroundHover: Appearance.colors.colSecondaryContainerHover
+                    colRipple: Appearance.colors.colSecondaryContainerActive
+
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: actionButton.modelData.iconName || "video_settings"
+                        iconSize: Appearance.font.pixelSize.larger
+                        color: root.colForeground
+                    }
+
+                    onClicked: actionButton.modelData.execute()
+                }
+            }
+        }
 
     }
 }
