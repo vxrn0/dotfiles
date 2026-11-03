@@ -13,6 +13,10 @@ Item { // Bar content region
 
     property var screen: root.QsWindow.window?.screen
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
+    // The media pill only exists while a player is present
+    readonly property bool hasMedia: MprisController.activePlayer != null
+    readonly property int harnessIconCount: (harnessIcons.codexRunning ? 1 : 0)
+        + (harnessIcons.claudeRunning ? 1 : 0) + (harnessIcons.opencodeRunning ? 1 : 0)
     property real useShortenedForm: (Appearance.sizes.barHellaShortenScreenWidthThreshold >= screen?.width) ? 2 : (Appearance.sizes.barShortenScreenWidthThreshold >= screen?.width) ? 1 : 0
     readonly property int centerSideModuleWidth: (useShortenedForm == 2) ? Appearance.sizes.barCenterSideModuleWidthHellaShortened : (useShortenedForm == 1) ? Appearance.sizes.barCenterSideModuleWidthShortened : Appearance.sizes.barCenterSideModuleWidth
 
@@ -58,33 +62,53 @@ Item { // Bar content region
 
         RippleButton { // AI chat
             id: aiButton
-            Layout.leftMargin: 6
+            Layout.leftMargin: 8
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: 30
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
+            // No fill and no ripple: the click wave would read as a lit-up background
+            rippleEnabled: false
             colBackground: "transparent"
-            // No fill when open: only the icon changes colour, the background stays untouched
+            colBackgroundHover: "transparent"
             colBackgroundToggled: "transparent"
-            colBackgroundToggledHover: Appearance.colors.colLayer1Hover
+            colBackgroundToggledHover: "transparent"
+            colRipple: Appearance.colors.colLayer1Active
             toggled: GlobalStates.aiChatOpen
             onClicked: GlobalStates.aiChatOpen = !GlobalStates.aiChatOpen
 
-            MaterialSymbol {
+            CustomIcon {
                 anchors.centerIn: parent
-                text: "auto_awesome"
-                iconSize: Appearance.font.pixelSize.larger
+                // Pixel mark, sized to its own 24x18 grid so the stepped corners stay crisp.
+                // width/height, not implicit*: CustomIcon sets explicit sizes, which win over
+                // implicit ones, so implicit sizing silently did nothing and the mark rendered
+                // at the widget's default 30 px.
+                width: 20
+                height: 15
+                source: "pilot-symbolic.svg"
+                colorize: true
                 color: aiButton.toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
             }
 
             StyledToolTip {
-                text: Translation.tr("AI chat") + " (SUPER+O)"
+                text: Translation.tr("Pilot") + " (SUPER+O)"
             }
         }
 
+        // Dot separator, same one the tray uses between its icons and the system indicators.
+        StyledText {
+            Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+            Layout.leftMargin: 3
+            font.pixelSize: Appearance.font.pixelSize.larger
+            color: Appearance.colors.colSubtext
+            text: "•"
+            visible: root.harnessIconCount > 0
+        }
+
         HarnessIcons {
+            id: harnessIcons
             Layout.alignment: Qt.AlignVCenter
-            Layout.leftMargin: 2
+            Layout.leftMargin: 4
             Layout.rightMargin: 4
         }
 
@@ -114,13 +138,13 @@ Item { // Bar content region
         }
 
         VerticalBarSeparator {
-            visible: Config.options?.bar.borderless
+            visible: Config.options?.bar.borderless && root.hasMedia
         }
 
         BarGroup {
             id: mediaGroup
             anchors.verticalCenter: parent.verticalCenter
-            visible: root.useShortenedForm < 2
+            visible: root.useShortenedForm < 2 && root.hasMedia
 
             Media {
                 Layout.fillWidth: true
@@ -196,11 +220,6 @@ Item { // Bar content region
         spacing: 5
         layoutDirection: Qt.RightToLeft
 
-        SysTray {
-            Layout.fillWidth: false
-            Layout.fillHeight: true
-        }
-
         RippleButton { // Right sidebar button
             id: rightSidebarButton
 
@@ -212,12 +231,13 @@ Item { // Bar content region
             implicitHeight: indicatorsRowLayout.implicitHeight + 5 * 2
 
             buttonRadius: Appearance.rounding.full
-            colBackground: hovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
-            colBackgroundHover: Appearance.colors.colLayer1Hover
+            // No fill and no ripple: the click wave would read as a lit-up background
+            rippleEnabled: false
+            colBackground: "transparent"
+            colBackgroundHover: "transparent"
             colRipple: Appearance.colors.colLayer1Active
-            // Neutral in every state: the background never lights up, only the icon colour changes
             colBackgroundToggled: "transparent"
-            colBackgroundToggledHover: Appearance.colors.colLayer1Hover
+            colBackgroundToggledHover: "transparent"
             colRippleToggled: Appearance.colors.colLayer1Active
             toggled: GlobalStates.sidebarRightOpen
             property color colText: toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
@@ -289,6 +309,13 @@ Item { // Bar content region
                     color: rightSidebarButton.colText
                 }
             }
+        }
+
+        // RightToLeft row: children later in the file sit further left, so the tray goes
+        // after the indicator button to appear left of the wifi/bluetooth icons.
+        SysTray {
+            Layout.fillWidth: false
+            Layout.fillHeight: true
         }
 
         Item {

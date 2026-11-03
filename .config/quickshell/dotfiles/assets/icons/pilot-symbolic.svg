@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 18" width="24" height="18" role="img" aria-label="Pilot">
+  <title>Pilot</title>
+  <!-- Pixel grid: one viewBox unit is one pixel at the 24x18 size used in the bar, and the
+       silhouette is built from horizontal and vertical steps only, so the corners stay crisp
+       instead of blurring into a rounded blob.
+       Wider than tall; the eye subpaths sit right of centre, so the mark looks to the right.
+       evenodd turns them into holes, which keeps the icon a single tinted colour. -->
+  <path fill="currentColor" fill-rule="evenodd" d="
+    M4 3 H20 V5 H22 V13 H20 V15 H4 V13 H2 V5 H4 Z
+    M11 9 H14 V13 H11 Z
+    M16 9 H19 V13 H16 Z"/>
+</svg>

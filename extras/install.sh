@@ -112,10 +112,8 @@ for app in "${FLATPAKS[@]}"; do
 done
 [ ${#BAD_FLATPAK[@]} -eq 0 ] || fail "not on flathub: ${BAD_FLATPAK[*]}"
 
-gray_asset="gray-stable-x86_64-linux.tar.gz"
-gray_base="https://github.com/vstaln/gray/releases/latest/download"
-curl -fsS -m 30 -o /dev/null -r 0-1024 "$gray_base/$gray_asset" || fail "gray release is not downloadable"
-curl -fsS -m 30 -o /dev/null -r 0-256 "$gray_base/SHA256SUMS" || fail "gray checksum file is not downloadable"
+command -v codex >/dev/null || fail "the Codex CLI is missing: npm install -g @openai/codex, then codex login"
+command -v python3 >/dev/null || fail "python3 is required by scripts/ai/codex-run.py"
 
 printf 'packages: %d from repo, %d from AUR\n' "${#REPO_PKGS[@]}" "${#AUR_PKGS[@]}"
 printf 'flatpaks: %d\n' "${#FLATPAKS[@]}"
@@ -137,7 +135,6 @@ copy $REPO/.local into ~/.local
 install fonts, generate Material Symbols Filled, refresh the font cache
 copy the pixie SDDM theme and select it
 build and install hypr-dynamic-cursors
-download gray and verify its checksum
 npm install -g monaco-editor
 enable sddm NetworkManager bluetooth fstrim.timer
 run matugen on the saved wallpaper
@@ -204,20 +201,6 @@ printf '[Theme]\nCurrent=pixie\n' | sudo tee /etc/sddm.conf.d/20-pixie.conf >/de
 
 say "cursor plugin"
 "$REPO/extras/build-dynamic-cursors.sh" || FAILED+=("hypr-dynamic-cursors")
-
-say "gray"
-if [ ! -x "$HOME/.local/bin/gray" ]; then
-    tmp="$(mktemp -d)"
-    if curl -fsSL -o "$tmp/$gray_asset" "$gray_base/$gray_asset" &&
-       curl -fsSL -o "$tmp/SHA256SUMS" "$gray_base/SHA256SUMS" &&
-       ( cd "$tmp" && grep " $gray_asset\$" SHA256SUMS | sha256sum -c - >/dev/null ); then
-        mkdir -p "$HOME/.local/bin"
-        tar xzf "$tmp/$gray_asset" -C "$HOME/.local/bin" gray && chmod +x "$HOME/.local/bin/gray"
-    else
-        FAILED+=("gray")
-    fi
-    rm -rf "$tmp"
-fi
 
 say "editor"
 npm config set prefix "$HOME/.local" >/dev/null 2>&1 || true

@@ -17,6 +17,8 @@ Singleton {
     property bool oskOpen: false
     property bool overlayOpen: false
     property bool aiChatOpen: false
+    // Bumped by the SUPER+Tab global shortcut; the panel resets when it changes.
+    property int aiChatResetRequested: 0
     property bool cheatsheetOpen: false
     property bool overviewOpen: false
     property bool regionSelectorOpen: false

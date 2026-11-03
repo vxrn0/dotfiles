@@ -34,8 +34,9 @@ Install: `git clone <repo> ~/dotfiles && ~/dotfiles/extras/install.sh`
 
 ## Extras that need a manual step
 
-- `gray` (AI panel backend) and `monaco-editor` come from `extras/install.sh`; the editor also
-  needs `npm install -g monaco-editor`.
+- The Codex CLI is the engine behind the Pilot panel; `scripts/ai/codex-run.py`
+  translates its events. `monaco-editor` comes from `extras/install.sh`; the editor also needs
+  `npm install -g monaco-editor`.
 - `extras/make-material-symbols-filled.py` bakes the filled icon weight; restart the shell after it.
 - `extras/build-dynamic-cursors.sh` rebuilds the cursor plugin and must be rerun after every
   Hyprland update, or the plugin will not load.

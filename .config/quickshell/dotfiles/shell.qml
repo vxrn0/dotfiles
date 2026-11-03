@@ -39,6 +39,26 @@ ShellRoot {
         onPressed: GlobalStates.aiChatOpen = !GlobalStates.aiChatOpen
     }
 
+    GlobalShortcut {
+        name: "aiChatNewChat"
+
+        // Toggles Pilot with a fresh chat. Skipped while a fullscreen window is focused,
+        // so the application keeps its own SUPER+Tab.
+        onPressed: {
+            const fullscreen = Hyprland.workspaces.values.some(workspace =>
+                workspace.monitor && workspace.active
+                && workspace.toplevels.values.some(toplevel => toplevel.wayland?.fullscreen));
+            if (fullscreen)
+                return;
+            if (GlobalStates.aiChatOpen) {
+                GlobalStates.aiChatOpen = false;
+            } else {
+                GlobalStates.aiChatResetRequested++;
+                GlobalStates.aiChatOpen = true;
+            }
+        }
+    }
+
     DotfilesFamily {}
 }
 
