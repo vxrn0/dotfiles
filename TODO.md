@@ -11,10 +11,10 @@ Work on the Quickshell shell (`~/.config/quickshell/dotfiles`, mirrored into `ex
 
 ## Done
 
-- [ ] Restore the 37 packages `pacman -Rns` removed with the illogical-impulse metapackages on
+- [x] Restored the 37 packages `pacman -Rns` removed with the illogical-impulse metapackages on
       2026-11-05: kitty, hyprland and the lock/idle/screenshot tools were only declared by those
-      metapackages, so `-s` took them as unneeded. `extras/restore-packages.sh` reinstalls them;
-      the running session survives until the next Hyprland restart
+      metapackages, so `-s` took them as unneeded. `extras/packages-explicit.txt` now lists every
+      one of them, so a fresh install no longer depends on those metapackages
 
 - [x] The engine is the Codex CLI, not `gray`. `scripts/ai/codex-run.py` runs
       `codex exec --json` (or `resume <id>`) and re-emits the event shape the panel and the bridge

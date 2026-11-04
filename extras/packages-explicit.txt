@@ -2,7 +2,7 @@ adw-gtk-theme-git
 base
 base-devel
 bc
-bibata-cursor-theme
+bibata-cursor-theme-bin
 bluez
 bluez-utils
 brightnessctl
@@ -76,7 +76,6 @@ nvidia-open-dkms
 nvidia-settings
 nvidia-utils
 openrgb
-otf-space-grotesk
 paru
 pavucontrol-qt
 pipewire-audio
@@ -114,9 +113,10 @@ sudo
 swappy
 swaylock
 tesseract
+tesseract-data-eng
+tesseract-data-osd
 tree
 ttf-jetbrains-mono-nerd
-ttf-material-symbols-variable-git
 tty-clock
 unzip
 uv
