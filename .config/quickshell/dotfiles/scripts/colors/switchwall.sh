@@ -139,7 +139,9 @@ set_wallpaper_path() {
 set_thumbnail_path() {
     local path="$1"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        jq --arg path "$path" '.background.thumbnailPath = $path' "$SHELL_CONFIG_FILE" > "$SHELL_CONFIG_FILE.tmp" && mv "$SHELL_CONFIG_FILE.tmp" "$SHELL_CONFIG_FILE"
+        # Appearance.qml reads wallpaper.thumbnailPath; writing background.thumbnailPath
+        # left video wallpapers with no colour source, so the shell fell back to defaults.
+        jq --arg path "$path" '.wallpaper.thumbnailPath = $path' "$SHELL_CONFIG_FILE" > "$SHELL_CONFIG_FILE.tmp" && mv "$SHELL_CONFIG_FILE.tmp" "$SHELL_CONFIG_FILE"
     fi
 }
 

@@ -117,6 +117,7 @@ tesseract-data-eng
 tesseract-data-osd
 tree
 ttf-jetbrains-mono-nerd
+ttf-material-symbols-variable-git
 tty-clock
 unzip
 uv
