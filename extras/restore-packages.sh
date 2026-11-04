@@ -11,7 +11,7 @@ set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "run with sudo" >&2; exit 1; }
 
 repo_packages=(
-    bc brightnessctl clang cliphist cmake ddcutil eza fish geoclue gnome-keyring
+    bc bluez bluez-utils brightnessctl clang cliphist cmake ddcutil eza fish geoclue gnome-keyring
     gtk-layer-shell hypridle hyprland hyprlock hyprpicker hyprshot hyprsunset
     imagemagick jq kitty matugen rsync songrec starship swappy tesseract
     ttf-jetbrains-mono-nerd uv wf-recorder wget wl-clipboard

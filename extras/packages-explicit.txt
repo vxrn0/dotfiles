@@ -3,6 +3,8 @@ base
 base-devel
 bc
 bibata-cursor-theme
+bluez
+bluez-utils
 brightnessctl
 btop
 bun
@@ -66,8 +68,8 @@ mesa-utils
 mpvpaper
 nano
 nautilus
-networkmanager
 network-manager-applet
+networkmanager
 nodejs
 npm
 nvidia-open-dkms
