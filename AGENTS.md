@@ -27,8 +27,8 @@ Install: `git clone <repo> ~/dotfiles && ~/dotfiles/extras/install.sh`
   `gtk-3.0/gtk.css`, `gtk-4.0/gtk.css`. They are committed only as first-boot seeds.
 - Terminal is kitty, file manager is Nautilus, editor is `~/.local/bin/monaco`, launcher and power
   menu come from the shell.
-- No zsh, foot, konsole, fuzzel, wlogout, mpv, dolphin, Kvantum or waffle panel. Do not
-  reintroduce them as fallbacks.
+- No zsh, foot, konsole, fuzzel, wlogout, mpv, dolphin or Kvantum. Do not reintroduce them as
+  fallbacks.
 - The name `dotfiles` must stay in sync in `hl.env("qsConfig")`, `QUICKSHELL_CONFIG_NAME` in the
   color scripts, and the fish alias `q`.
 
@@ -48,6 +48,5 @@ for f in .config/hypr/hyprland/*.lua .config/hypr/custom/*.lua; do luac -p "$f";
 bash -n .config/quickshell/dotfiles/scripts/colors/switchwall.sh
 python3 -c "import tomllib;tomllib.load(open('.config/matugen/config.toml','rb'))"
 ./extras/install.sh --check
-grep -rIn "illogical\|waffle\|quickshell/ii" .config
 git grep -lP '[\x{0400}-\x{04FF}]' -- ':!*.ttf' ':!*.png' ':!*.jpg'
 ```

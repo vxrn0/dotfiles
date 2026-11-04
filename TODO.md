@@ -121,7 +121,7 @@ Work on the Quickshell shell (`~/.config/quickshell/dotfiles`, mirrored into `ex
 - [x] Material Symbols Filled icons (static font instance)
 - [x] Harness icons blinking
 - [x] Tooltips disabled shell-wide
-- [x] Moved from `illogical-impulse-quickshell-git` to `quickshell` from `extra`
+- [x] The shell runs on the distro `quickshell` package, not the patched build it shipped with
 - [x] Brightness and volume sliders in the quick settings panel
 - [x] Media player: bar only, middle click toggles playback
 - [x] Clock popup: Todo and uptime removed
