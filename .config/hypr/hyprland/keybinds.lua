@@ -16,24 +16,45 @@ local qsIsAlive = "pgrep -x qs >/dev/null"
 -- see the script for why a plain `pgrep -x qs` check was not enough.
 local qsRegionGuard = hyprScripts .. "/region_guard.sh || "
 
-hl.bind("SUPER + SUPER_L", hl.dsp.global("quickshell:searchToggleRelease"), { description = "Shell: Toggle search" })
-hl.bind("SUPER + SUPER_R", hl.dsp.global("quickshell:searchToggleRelease"))
 hl.bind("SUPER_L", hl.dsp.global("quickshell:workspaceNumber"), { ignore_mods = true, transparent = true })
 hl.bind("SUPER_R", hl.dsp.global("quickshell:workspaceNumber"), { ignore_mods = true, transparent = true })
 hl.bind("SUPER_L", hl.dsp.global("quickshell:workspaceNumber"),
     { ignore_mods = true, transparent = true, release = true })
 hl.bind("SUPER_R", hl.dsp.global("quickshell:workspaceNumber"),
     { ignore_mods = true, transparent = true, release = true })
-local superDown = false
+-- A release bind cannot tell a plain Super tap from Super used as a modifier, so the tap
+-- is detected here instead: the launcher opens only when nothing else happened between
+-- press and release. Any key, a workspace or window change, and wheel movement cancel it,
+-- which covers Super+number, Super+scroll and the rest of the Super binds. Mouse buttons
+-- cannot be observed without a dispatcher, so a click that neither moves focus nor changes
+-- the workspace still counts as a tap.
+local superHeld, superDirty = false, false
+
+local function superUsed()
+    if superHeld then
+        superDirty = true
+    end
+end
+
 hl.on("input.keyboard.key", function(code, _time, state)
     if code == 133 or code == 134 then
-        superDown = state == 1
+        if state == 1 then
+            superHeld, superDirty = true, false
+        elseif superHeld then
+            if not superDirty then
+                hl.dispatch(hl.dsp.exec_cmd("qs -c $qsConfig ipc call search toggle"))
+            end
+            superHeld = false
+        end
         return
     end
-    if state == 1 and superDown then
-        hl.dispatch(hl.dsp.global("quickshell:searchToggleReleaseInterrupt"))
+    if state == 1 then
+        superUsed()
     end
 end)
+
+hl.on("workspace.active", superUsed)
+hl.on("window.active", superUsed)
 hl.bind("SUPER + N", hl.dsp.global("quickshell:sidebarRightToggle"), { description = "Shell: Toggle right sidebar" })
 hl.bind("SUPER + V", hl.dsp.global("quickshell:overviewClipboardToggle"), { description = "Shell: Clipboard history" })
 hl.bind("SUPER + O", hl.dsp.global("quickshell:aiChatToggle"), { description = "Shell: Pilot" })
@@ -283,7 +304,11 @@ for i = 1, 4 do
     local key = { "SUPER + mouse_down", "SUPER + mouse_up" }
     local keycombos = { key[1], key[2], "CTRL + " .. key[1], "CTRL + " .. key[2] }
     local prefix = { "r+", "r-", "r+", "r-" }
-    hl.bind(keycombos[i], hl.dsp.focus({ workspace = prefix[i] .. "1" }))
+    local workspace = prefix[i] .. "1"
+    hl.bind(keycombos[i], function()
+        superUsed()
+        hl.dispatch(hl.dsp.focus({ workspace = workspace }))
+    end)
 end
 --## Special
 hl.bind("SUPER + S", hl.dsp.workspace.toggle_special("special"), { description = "Workspace: Toggle scratchpad" })
