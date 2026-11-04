@@ -95,7 +95,6 @@ python-requests
 python-svgwrite
 python-uvloop
 python-websockets
-qbittorrent
 qt6-imageformats
 quickshell
 rsync
