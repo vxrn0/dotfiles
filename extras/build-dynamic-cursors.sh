@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-COMMIT=5a224284872208b5324759d535d65061043725de
+COMMIT=2a8d0b735328d874a78ca93b2f201649f712a74a
 DEST="$HOME/.local/lib/hyprland"
 TMP="$(mktemp -d)"
 
