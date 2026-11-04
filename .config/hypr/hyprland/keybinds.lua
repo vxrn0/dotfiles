@@ -24,6 +24,16 @@ hl.bind("SUPER_L", hl.dsp.global("quickshell:workspaceNumber"),
     { ignore_mods = true, transparent = true, release = true })
 hl.bind("SUPER_R", hl.dsp.global("quickshell:workspaceNumber"),
     { ignore_mods = true, transparent = true, release = true })
+local superDown = false
+hl.on("input.keyboard.key", function(code, _time, state)
+    if code == 133 or code == 134 then
+        superDown = state == 1
+        return
+    end
+    if state == 1 and superDown then
+        hl.dispatch(hl.dsp.global("quickshell:searchToggleReleaseInterrupt"))
+    end
+end)
 hl.bind("SUPER + N", hl.dsp.global("quickshell:sidebarRightToggle"), { description = "Shell: Toggle right sidebar" })
 hl.bind("SUPER + V", hl.dsp.global("quickshell:overviewClipboardToggle"), { description = "Shell: Clipboard history" })
 hl.bind("SUPER + O", hl.dsp.global("quickshell:aiChatToggle"), { description = "Shell: Pilot" })
