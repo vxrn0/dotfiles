@@ -122,6 +122,8 @@ Work on the Quickshell shell (`~/.config/quickshell/dotfiles`, mirrored into `ex
 - [x] Harness icons blinking
 - [x] Tooltips disabled shell-wide
 - [x] The shell runs on the distro `quickshell` package, not the patched build it shipped with
+- [x] No trace of the shell this config started from: the name is gone from the repo, the docs,
+      the backup tree (moved to `~/.local/share/dotfiles-backups`) and the stray icon
 - [x] Brightness and volume sliders in the quick settings panel
 - [x] Media player: bar only, middle click toggles playback
 - [x] Clock popup: Todo and uptime removed
