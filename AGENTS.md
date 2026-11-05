@@ -38,8 +38,9 @@ Install: `git clone <repo> ~/dotfiles && ~/dotfiles/extras/install.sh`
   translates its events. `monaco-editor` comes from `extras/install.sh`; the editor also needs
   `npm install -g monaco-editor`.
 - `extras/make-material-symbols-filled.py` bakes the filled icon weight; restart the shell after it.
-- `extras/build-dynamic-cursors.sh` rebuilds the cursor plugin and must be rerun after every
-  Hyprland update, or the plugin will not load.
+- `hyprland/scripts/build-dynamic-cursors.sh` rebuilds the cursor plugin.
+  `hyprland/scripts/ensure-dynamic-cursors.sh` loads it at login and rebuilds it first when
+  Hyprland was updated, because the ABI check rejects the old build.
 
 ## Verify
 

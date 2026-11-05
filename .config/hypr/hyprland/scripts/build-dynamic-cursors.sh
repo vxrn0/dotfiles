@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if ! pkg-config --exists hyprland; then
+    echo "hyprland headers are missing, install hyprland and try again" >&2
+    exit 1
+fi
+
 COMMIT=2a8d0b735328d874a78ca93b2f201649f712a74a
 DEST="$HOME/.local/lib/hyprland"
 TMP="$(mktemp -d)"

@@ -24,5 +24,5 @@ hl.on("hyprland.start", function ()
 
     -- Cursor
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 24")
-    hl.exec_cmd("hyprctl plugin load $HOME/.local/lib/hyprland/dynamic-cursors.so")
+    hl.exec_cmd("$HOME/.config/hypr/hyprland/scripts/ensure-dynamic-cursors.sh")
 end)

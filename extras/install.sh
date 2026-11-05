@@ -55,7 +55,7 @@ for f in \
     "$REPO/.config/kitty/colors.conf" \
     "$REPO/extras/dotfiles-config.json" \
     "$REPO/extras/install.sh" \
-    "$REPO/extras/build-dynamic-cursors.sh" \
+    "$REPO/.config/hypr/hyprland/scripts/build-dynamic-cursors.sh" \
     "$REPO/extras/make-material-symbols-filled.py" \
     "$REPO/extras/fonts/google-sans-flex" \
     "$REPO/extras/sddm/pixie/Main.qml" \
@@ -200,7 +200,7 @@ sudo mkdir -p /etc/sddm.conf.d
 printf '[Theme]\nCurrent=pixie\n' | sudo tee /etc/sddm.conf.d/20-pixie.conf >/dev/null
 
 say "cursor plugin"
-"$REPO/extras/build-dynamic-cursors.sh" || FAILED+=("hypr-dynamic-cursors")
+"$HOME/.config/hypr/hyprland/scripts/build-dynamic-cursors.sh" || FAILED+=("hypr-dynamic-cursors")
 
 say "editor"
 npm config set prefix "$HOME/.local" >/dev/null 2>&1 || true
