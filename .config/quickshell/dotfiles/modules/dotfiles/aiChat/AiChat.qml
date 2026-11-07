@@ -51,13 +51,14 @@ PanelWindow {
 
     // ---- state ---------------------------------------------------------------
     property string codexPath: ""
-    property string taskText: ""
-    property bool taskCollapsed: false
-    property var steps: []
-    property string answer: ""
-    property string streamText: ""
     property string statusLine: ""
     property bool running: false
+    // The whole conversation, one entry per request:
+    // { user, system, events: [{tool, command, preview, duration, state}], stream,
+    //   answer, meta, done }
+    property var turns: []
+    // Seconds since the current turn started, shown while it runs
+    property string elapsed: ""
     property bool sessionStarted: false
     property string sessionId: ""
     property bool stopping: false
@@ -134,52 +135,66 @@ PanelWindow {
     function resetChat() {
         chat.running = false;
         root.running = false;
-        root.taskText = "";
-        root.steps = [];
-        root.answer = "";
-        root.streamText = "";
+        root.turns = [];
         root.statusLine = "";
         root.sessionStarted = false;
         root.sessionId = "";
         root.paletteMode = "";
         root.footer = "";
         root.runTokens = 0;
+        root.elapsed = "";
         input.text = "";
     }
 
     function switchSession(item) {
         root.sessionId = item.name;
         root.sessionStarted = true;
-        root.taskText = "";
-        root.steps = [];
-        root.answer = Translation.tr("Switched to %1\n%2").arg(item.name).arg(item.label);
-        root.streamText = "";
+        root.turns = [{
+            user: "",
+            system: Translation.tr("Switched to %1\n%2").arg(item.name).arg(item.label),
+            events: [], stream: "", answer: "", meta: "", done: true,
+        }];
         root.statusLine = "";
         root.footer = "";
         root.paletteMode = "";
         input.text = "";
     }
 
+    // The turn the engine is currently writing into.
+    function patchTurn(patch) {
+        const next = root.turns.slice();
+        if (next.length === 0)
+            return;
+        next[next.length - 1] = Object.assign({}, next[next.length - 1], patch);
+        root.turns = next;
+    }
+
     function addStep(id, tool, label) {
-        const next = root.steps.slice();
-        next.push({
+        const turn = root.turns[root.turns.length - 1];
+        if (!turn)
+            return;
+        const events = turn.events.slice();
+        events.push({
             id: id ?? "",
-            toolName: tool || label || "bash",
+            tool: tool || label || "bash",
             command: "",
             preview: "",
             duration: "",
             state: "running",
             startedAt: Date.now(),
         });
-        root.steps = next;
+        root.patchTurn({ events: events });
     }
 
     function updateStep(id, patch) {
-        const next = root.steps.slice();
-        for (let i = next.length - 1; i >= 0; i--) {
-            if (next[i].id === id) {
-                next[i] = Object.assign({}, next[i], patch);
-                root.steps = next;
+        const turn = root.turns[root.turns.length - 1];
+        if (!turn)
+            return;
+        const events = turn.events.slice();
+        for (let i = events.length - 1; i >= 0; i--) {
+            if (events[i].id === id) {
+                events[i] = Object.assign({}, events[i], patch);
+                root.patchTurn({ events: events });
                 return;
             }
         }
@@ -201,16 +216,19 @@ PanelWindow {
     }
 
     function finishStep(id, failed, output) {
-        const next = root.steps.slice();
-        for (let i = next.length - 1; i >= 0; i--) {
-            if (next[i].id === id) {
-                const seconds = (Date.now() - next[i].startedAt) / 1000;
-                next[i] = Object.assign({}, next[i], {
+        const turn = root.turns[root.turns.length - 1];
+        if (!turn)
+            return;
+        const events = turn.events.slice();
+        for (let i = events.length - 1; i >= 0; i--) {
+            if (events[i].id === id) {
+                const seconds = (Date.now() - events[i].startedAt) / 1000;
+                events[i] = Object.assign({}, events[i], {
                     state: failed ? "failed" : "done",
                     preview: root.cleanOutput(output).split("\n").slice(0, 3).join("\n"),
                     duration: seconds >= 0.1 ? seconds.toFixed(1) + "s" : "",
                 });
-                root.steps = next;
+                root.patchTurn({ events: events });
                 return;
             }
         }
@@ -236,8 +254,11 @@ PanelWindow {
             } else if (row.phase === "tool_finished") {
                 root.finishStep(row.call_id, !!row.error, row.output);
             } else if (row.phase === "text") {
-                if (row.delta)
-                    root.streamText += row.delta;
+                if (row.delta) {
+                    const turn = root.turns[root.turns.length - 1];
+                    if (turn)
+                        root.patchTurn({ stream: turn.stream + row.delta });
+                }
             } else if (row.phase === "generating") {
                 root.statusLine = Translation.tr("Thinking…");
             } else if (row.phase === "provider_retry") {
@@ -250,31 +271,38 @@ PanelWindow {
                 root.statusLine = Translation.tr("Compacted context");
             }
         } else if (row.type === "result") {
-            root.answer = row.text || root.streamText;
-            root.streamText = "";
+            const turn = root.turns[root.turns.length - 1];
+            // The stream already carries intermediate commentary; the result is the
+            // answer. Keep both: prose first, the final word last.
+            const carried = (turn?.stream ?? "").trim();
+            const text = row.text || carried;
+            root.patchTurn({ answer: text, stream: "", done: true });
             root.statusLine = "";
             root.finishRun(row.usage);
         } else if (row.type === "error") {
             // An error row may carry a `hint` naming the command that fixes it;
             // its own docs say to read the hint instead of retrying blindly.
-            root.answer = Translation.tr("Error: %1").arg(row.message || row.code || "");
+            root.patchTurn({
+                answer: Translation.tr("Error: %1").arg(row.message || row.code || ""),
+                stream: "",
+                done: true,
+            });
             root.statusLine = row.hint || "";
         }
     }
 
-    // Matches the terminal summary: "worked for 12s, 120 tokens/s"
+    // Matches the terminal summary: "12s · 120 tokens/s"
     function finishRun(usage) {
         const seconds = (Date.now() - root.runStartedAt) / 1000;
         const tokens = usage?.output_tokens ?? usage?.total_tokens ?? 0;
         root.runTokens = tokens;
-        if (seconds < 0.5 || tokens === 0) {
-            root.footer = "";
-            return;
-        }
-        const rate = Math.round(tokens / seconds);
-        root.footer = Translation.tr("worked for %1s, %2 tokens/s")
-            .arg(seconds.toFixed(0))
-            .arg(rate);
+        let meta = "";
+        if (seconds >= 0.5)
+            meta = seconds.toFixed(0) + "s";
+        if (tokens > 0)
+            meta += (meta.length > 0 ? " · " : "") + tokens + " tokens";
+        root.footer = meta;
+        root.patchTurn({ meta: meta });
     }
 
     function activateItem(item) {
@@ -369,18 +397,26 @@ PanelWindow {
         if (root.running)
             return;
         if (root.codexPath.length === 0) {
-            root.answer = Translation.tr("Codex CLI is not installed, or not logged in.");
+            root.turns = root.turns.concat([{
+                user: "", system: Translation.tr("Codex CLI is not installed, or not logged in."),
+                events: [], stream: "", answer: "", meta: "", done: true,
+            }]);
             input.text = "";
             return;
         }
 
         root.runStartedAt = Date.now();
         root.footer = "";
-        root.taskText = text;
-        root.taskCollapsed = false;
-        root.steps = [];
-        root.answer = "";
-        root.streamText = "";
+        root.elapsed = "0s";
+        root.turns = root.turns.concat([{
+            user: text,
+            system: "",
+            events: [],
+            stream: "",
+            answer: "",
+            meta: "",
+            done: false,
+        }]);
         root.statusLine = "";
         input.text = "";
 
@@ -479,23 +515,37 @@ PanelWindow {
         onStarted: root.running = true
         onExited: (code, status) => {
             root.running = false;
+            const turn = root.turns[root.turns.length - 1];
             if (root.stopping) {
                 root.stopping = false;
-                root.streamText = "";
                 root.statusLine = "";
-                // Whatever was mid-flight stays marked, otherwise its spinner keeps turning.
-                root.steps = root.steps.map(step => step.state === "running"
-                    ? Object.assign({}, step, { state: "failed" })
-                    : step);
-                root.answer = Translation.tr("Stopped.");
+                root.patchTurn({
+                    // Whatever was mid-flight stays marked, otherwise its spinner keeps turning.
+                    events: (turn?.events ?? []).map(event => event.state === "running"
+                        ? Object.assign({}, event, { state: "failed" })
+                        : event),
+                    answer: Translation.tr("Stopped."),
+                    stream: "",
+                    done: true,
+                });
                 return;
             }
-            if (root.answer.length === 0)
-                root.answer = root.streamText;
-            root.streamText = "";
+            if (turn && !turn.done && turn.answer.length === 0) {
+                const carried = turn.stream.trim();
+                if (carried.length > 0)
+                    root.patchTurn({ answer: carried, stream: "", done: true });
+            }
             if (code === 0)
                 root.sessionStarted = true;
         }
+    }
+
+    // Elapsed counter for the running turn; one authored motion, the spinning glyph.
+    Timer {
+        interval: 1000
+        running: root.running
+        repeat: true
+        onTriggered: root.elapsed = Math.floor((Date.now() - root.runStartedAt) / 1000) + "s"
     }
 
     Timer {
@@ -601,39 +651,51 @@ PanelWindow {
                 fill: parent
                 margins: 12
             }
-            spacing: 10
+            spacing: 8
 
-            RowLayout { // Header
+            // ---- Header -----------------------------------------------------
+            RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
 
-                CustomIcon {
-                    width: 20
-                    height: 20
-                    source: "pilot-symbolic.svg"
-                    colorize: true
-                    color: Appearance.colors.colPrimary
-                }
                 StyledText {
                     text: Translation.tr("Pilot")
                     font {
                         pixelSize: Appearance.font.pixelSize.normal
                         weight: Font.DemiBold
                     }
+                    color: Appearance.colors.colOnLayer0
                 }
-                Rectangle { // Status dot
-                    implicitWidth: 7
-                    implicitHeight: 7
-                    radius: 4
-                    color: root.running ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1Inactive
+
+                // Live status word instead of a blinking dot: reads like an agent,
+                // not a daemon.
+                StyledText {
+                    visible: root.running
+                    text: root.statusLine.length > 0 ? root.statusLine : Translation.tr("Working")
+                    font {
+                        pixelSize: Appearance.font.pixelSize.small
+                        weight: Font.Medium
+                    }
+                    color: Appearance.colors.colPrimary
 
                     SequentialAnimation on opacity {
                         running: root.running
                         loops: Animation.Infinite
-                        NumberAnimation { to: 0.35; duration: 700 }
-                        NumberAnimation { to: 1; duration: 700 }
+                        NumberAnimation { to: 0.55; duration: 900; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1.0; duration: 900; easing.type: Easing.InOutSine }
                     }
                 }
+
+                StyledText {
+                    visible: !root.running && root.elapsed.length > 0
+                    text: root.elapsed
+                    font {
+                        family: Appearance.font.family.monospace
+                        pixelSize: Appearance.font.pixelSize.smallest
+                    }
+                    color: Appearance.colors.colSubtext
+                }
+
                 Item { Layout.fillWidth: true }
 
                 AiIconButton {
@@ -642,196 +704,129 @@ PanelWindow {
                 }
             }
 
-            // What the next turn will run with. Shown because the panel edits real
-            // files: the workspace and the sandbox are part of the question.
+            // Workdir line, quiet.
             StyledText {
                 Layout.fillWidth: true
-                visible: root.model.length > 0
-                text: [root.model, root.sandbox,
-                    root.workdir.length > 0 ? root.workdir.replace(/^.*\//, "") : ""]
-                    .filter(part => part.length > 0).join("  ·  ")
-                elide: Text.ElideRight
+                visible: root.workdir.length > 0
+                text: root.workdir
+                elide: Text.ElideMiddle
                 font {
                     family: Appearance.font.family.monospace
                     pixelSize: Appearance.font.pixelSize.smallest
                 }
-                color: root.sandbox === "full"
-                    ? Appearance.colors.colError
-                    : Appearance.colors.colSubtext
+                color: Appearance.colors.colSubtext
             }
 
-            Rectangle { // Task card
-                Layout.fillWidth: true
-                visible: root.taskText.length > 0
-                implicitHeight: taskColumn.implicitHeight + 20
-                radius: Appearance.rounding.normal
-                color: Appearance.colors.colLayer1
-                border.width: 1
-                border.color: Appearance.colors.colLayer0Border
-
-                ColumnLayout {
-                    id: taskColumn
-                    anchors {
-                        fill: parent
-                        margins: 10
-                    }
-                    spacing: 6
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        StyledText {
-                            text: Translation.tr("TASK")
-                            font {
-                                pixelSize: Appearance.font.pixelSize.smallest
-                                letterSpacing: 1.2
-                                weight: Font.DemiBold
-                            }
-                            color: Appearance.colors.colSubtext
-                        }
-                        Item { Layout.fillWidth: true }
-                        MaterialSymbol {
-                            text: root.taskCollapsed ? "expand_more" : "expand_less"
-                            iconSize: 18
-                            color: Appearance.colors.colSubtext
-
-                            MouseArea {
-                                anchors.fill: parent
-                                anchors.margins: -4
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.taskCollapsed = !root.taskCollapsed
-                            }
-                        }
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        visible: !root.taskCollapsed
-                        text: root.taskText
-                        wrapMode: Text.Wrap
-                        maximumLineCount: 4
-                        elide: Text.ElideRight
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnLayer1
-                    }
-                }
-            }
-
-            StyledFlickable { // Activity
+            // ---- Transcript ---------------------------------------------
+            StyledFlickable {
                 id: scroller
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
                 contentWidth: width
-                contentHeight: activity.implicitHeight
-                visible: root.steps.length > 0 || root.answer.length > 0 || root.streamText.length > 0 || root.running
+                contentHeight: transcript.implicitHeight
+                visible: root.turns.length > 0
 
                 onContentHeightChanged: if (contentHeight > height) contentY = Math.max(0, contentHeight - height)
 
                 ColumnLayout {
-                    id: activity
+                    id: transcript
                     width: scroller.width
-                    spacing: 10
+                    spacing: 14
 
-                    StyledText {
-                        Layout.fillWidth: true
-                        visible: root.steps.length > 0
-                        topPadding: 4
-                        text: Translation.tr("PROGRESS")
-                        font {
-                            pixelSize: Appearance.font.pixelSize.smallest
-                            letterSpacing: 1.2
-                            weight: Font.DemiBold
-                        }
-                        color: Appearance.colors.colSubtext
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
-
-                        Repeater {
-                            model: root.steps
-
-                            AiStep {
-                                required property var modelData
-                                Layout.fillWidth: true
-                                toolName: modelData.toolName
-                                command: modelData.command
-                                preview: modelData.preview
-                                duration: modelData.duration
-                                state: modelData.state
-                            }
-                        }
-                    }
-
-                    StyledText { // Live text while the agent writes
-                        Layout.fillWidth: true
-                        visible: root.streamText.length > 0
-                        text: root.streamText
-                        textFormat: Text.MarkdownText
-                        wrapMode: Text.Wrap
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnLayer1
-                    }
-
-                    Rectangle { // Result
-                        Layout.fillWidth: true
-                        visible: root.answer.length > 0
-                        implicitHeight: resultColumn.implicitHeight + 20
-                        radius: Appearance.rounding.normal
-                        color: Appearance.colors.colLayer1
-                        border.width: 1
-                        border.color: Appearance.colors.colLayer0Border
+                    Repeater {
+                        model: root.turns
 
                         ColumnLayout {
-                            id: resultColumn
-                            anchors {
-                                fill: parent
-                                margins: 10
-                            }
+                            required property var modelData
+                            Layout.fillWidth: true
                             spacing: 6
 
+                            // User turn: a single readable line, right-aligned feel
+                            // via a subtle leading rule, not a bubble.
                             RowLayout {
-                                spacing: 6
-                                MaterialSymbol {
-                                    text: "lightbulb"
-                                    iconSize: 16
+                                Layout.fillWidth: true
+                                visible: modelData.user.length > 0
+                                spacing: 8
+
+                                Rectangle {
+                                    Layout.alignment: Qt.AlignTop
+                                    implicitWidth: 2
+                                    implicitHeight: 14
+                                    radius: 1
                                     color: Appearance.colors.colPrimary
                                 }
                                 StyledText {
-                                    text: Translation.tr("RESULT")
-                                    font {
-                                        pixelSize: Appearance.font.pixelSize.smallest
-                                        letterSpacing: 1.2
-                                        weight: Font.DemiBold
-                                    }
-                                    color: Appearance.colors.colPrimary
+                                    Layout.fillWidth: true
+                                    text: modelData.user
+                                    wrapMode: Text.Wrap
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    color: Appearance.colors.colOnLayer0
                                 }
                             }
 
+                            // System note (session switch etc.)
                             StyledText {
                                 Layout.fillWidth: true
-                                text: root.answer
+                                visible: modelData.system.length > 0
+                                text: modelData.system
+                                wrapMode: Text.Wrap
+                                font {
+                                    family: Appearance.font.family.monospace
+                                    pixelSize: Appearance.font.pixelSize.smallest
+                                }
+                                color: Appearance.colors.colSubtext
+                            }
+
+                            // Event rows: collapsible command/file-change list.
+                            // While running, each row is visible; once done the whole
+                            // group can be folded into one summary line.
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+                                visible: modelData.events.length > 0
+
+                                Repeater {
+                                    model: modelData.events
+
+                                    AiEventRow {
+                                        required property var modelData
+                                        Layout.fillWidth: true
+                                        toolName: modelData.tool
+                                        command: modelData.command
+                                        preview: modelData.preview
+                                        duration: modelData.duration
+                                        state: modelData.state
+                                    }
+                                }
+                            }
+
+                            // Agent answer: the hero of the screen.
+                            StyledText {
+                                Layout.fillWidth: true
+                                visible: modelData.stream.length > 0
+                                text: modelData.stream
                                 textFormat: Text.MarkdownText
                                 wrapMode: Text.Wrap
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colOnLayer1
-                            }
-
-                            Rectangle { // Hairline before the run summary
-                                Layout.fillWidth: true
-                                Layout.topMargin: 2
-                                implicitHeight: 1
-                                visible: root.footer.length > 0
-                                color: Appearance.colors.colLayer0Border
+                                font.pixelSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnLayer0
                             }
 
                             StyledText {
                                 Layout.fillWidth: true
-                                visible: root.footer.length > 0
-                                text: root.footer
+                                visible: modelData.answer.length > 0
+                                text: modelData.answer
+                                textFormat: Text.MarkdownText
+                                wrapMode: Text.Wrap
+                                font.pixelSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnLayer0
+                            }
+
+                            // Run meta, quiet.
+                            StyledText {
+                                Layout.fillWidth: true
+                                visible: modelData.meta.length > 0
+                                text: modelData.meta
                                 font {
                                     family: Appearance.font.family.monospace
                                     pixelSize: Appearance.font.pixelSize.smallest
@@ -840,29 +835,20 @@ PanelWindow {
                             }
                         }
                     }
-
-                    StyledText { // Status line: retries and compaction
-                        Layout.fillWidth: true
-                        visible: root.statusLine.length > 0
-                        text: root.statusLine
-                        wrapMode: Text.Wrap
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
-                    }
                 }
-            }
 
-            Column { // Empty state
+            // ---- Empty state --------------------------------------------
+            Column {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 8
-                visible: !scroller.visible
-                topPadding: 40
+                spacing: 10
+                visible: root.turns.length === 0
+                topPadding: 60
 
                 CustomIcon {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 28
-                    height: 28
+                    width: 32
+                    height: 32
                     source: "pilot-symbolic.svg"
                     colorize: true
                     color: Appearance.colors.colSubtext
@@ -870,12 +856,33 @@ PanelWindow {
                 StyledText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Translation.tr("What should I do?")
+                    color: Appearance.colors.colOnLayer0
+                    font.pixelSize: Appearance.font.pixelSize.normal
+                    font.weight: Font.Medium
+                }
+                StyledText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width * 0.8
+                    horizontalAlignment: Text.AlignHCenter
+                    text: Translation.tr("Type a request, or / for commands.")
                     color: Appearance.colors.colSubtext
                     font.pixelSize: Appearance.font.pixelSize.small
+                    wrapMode: Text.Wrap
                 }
             }
 
-            AiCommandPalette { // Slash commands
+            // ---- Status line (retries, compaction) ----------------------
+            StyledText {
+                Layout.fillWidth: true
+                visible: root.statusLine.length > 0 && root.running
+                text: root.statusLine
+                wrapMode: Text.Wrap
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+            }
+
+            // ---- Command palette ----------------------------------------
+            AiCommandPalette {
                 Layout.fillWidth: true
                 visible: root.paletteMode !== ""
                 items: root.paletteItems
@@ -886,60 +893,163 @@ PanelWindow {
                 }
             }
 
-            ToolbarTextField { // Input; Enter sends, Tab starts a new chat
-                id: input
+            // ---- Composer -----------------------------------------------
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.fillHeight: false
-                implicitHeight: 42
-                colBackground: Appearance.colors.colLayer1
-                placeholderText: root.running
-                    ? Translation.tr("Working…")
-                    : Translation.tr("Working… type /stop to cancel")
-                // Kept enabled while running so /stop can be typed; send() ignores
-                // plain text until the task ends.
-                enabled: true
+                implicitHeight: composerColumn.implicitHeight + 16
+                radius: Appearance.rounding.normal
+                color: Appearance.colors.colLayer1
+                border.width: 1
+                border.color: root.running
+                    ? Appearance.colors.colPrimary
+                    : Appearance.colors.colLayer0Border
 
-                onTextChanged: {
-                    const typing = text;
-                    root.paletteQuery = typing;
-                    if (typing.startsWith("/") && !typing.includes(" ")) {
-                        // A sub-menu stays only while its own command is still typed
-                        const inSubmenu = (root.paletteMode === "model" && typing === "/model")
-                            || (root.paletteMode === "effort" && typing === "/effort")
-                            // /sessions rewrites the input to itself after Enter, and that
-                            // change must not fall back to the command list.
-                            || (root.paletteMode === "sessions" && typing === "/sessions");
-                        if (!inSubmenu) {
-                            root.paletteMode = "command";
-                            root.paletteIndex = 0;
-                        }
-                    } else if (root.paletteMode === "command") {
-                        root.paletteMode = "";
-                    }
+                Behavior on border.color {
+                    ColorAnimation { duration: 180 }
                 }
 
-                Keys.onPressed: event => {
-                    if (root.paletteMode !== "" && root.paletteItems.length > 0) {
-                        if (event.key === Qt.Key_Down) {
-                            root.paletteIndex = (root.paletteIndex + 1) % root.paletteItems.length;
-                            event.accepted = true;
-                            return;
+                ColumnLayout {
+                    id: composerColumn
+                    anchors {
+                        fill: parent
+                        margins: 8
+                    }
+                    spacing: 6
+
+                    ToolbarTextField {
+                        id: input
+                        Layout.fillWidth: true
+                        implicitHeight: 36
+                        colBackground: "transparent"
+                        placeholderText: root.running
+                            ? Translation.tr("Working… type /stop to cancel")
+                            : Translation.tr("Ask Pilot…")
+                        enabled: true
+
+                        onTextChanged: {
+                            const typing = text;
+                            root.paletteQuery = typing;
+                            if (typing.startsWith("/") && !typing.includes(" ")) {
+                                const inSubmenu = (root.paletteMode === "model" && typing === "/model")
+                                    || (root.paletteMode === "effort" && typing === "/effort")
+                                    || (root.paletteMode === "sessions" && typing === "/sessions");
+                                if (!inSubmenu) {
+                                    root.paletteMode = "command";
+                                    root.paletteIndex = 0;
+                                }
+                            } else if (root.paletteMode === "command") {
+                                root.paletteMode = "";
+                            }
                         }
-                        if (event.key === Qt.Key_Up) {
-                            root.paletteIndex = (root.paletteIndex + root.paletteItems.length - 1) % root.paletteItems.length;
-                            event.accepted = true;
-                            return;
+
+                        Keys.onPressed: event => {
+                            if (root.paletteMode !== "" && root.paletteItems.length > 0) {
+                                if (event.key === Qt.Key_Down) {
+                                    root.paletteIndex = (root.paletteIndex + 1) % root.paletteItems.length;
+                                    event.accepted = true;
+                                    return;
+                                }
+                                if (event.key === Qt.Key_Up) {
+                                    root.paletteIndex = (root.paletteIndex + root.paletteItems.length - 1) % root.paletteItems.length;
+                                    event.accepted = true;
+                                    return;
+                                }
+                                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                    root.activateItem(root.paletteItems[root.paletteIndex]);
+                                    event.accepted = true;
+                                    return;
+                                }
+                            }
                         }
-                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            root.activateItem(root.paletteItems[root.paletteIndex]);
-                            event.accepted = true;
-                            return;
+
+                        onAccepted: root.send()
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        // Chips: model · effort · sandbox
+                        Rectangle {
+                            implicitHeight: 20
+                            implicitWidth: chipModel.implicitWidth + 10
+                            radius: Appearance.rounding.full
+                            color: Appearance.colors.colLayer2
+                            border.width: 1
+                            border.color: Appearance.colors.colLayer0Border
+                            StyledText {
+                                id: chipModel
+                                anchors.centerIn: parent
+                                text: root.model.length > 0 ? root.model : "model"
+                                font { family: Appearance.font.family.monospace; pixelSize: Appearance.font.pixelSize.smallest }
+                                color: Appearance.colors.colOnLayer2
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: { root.paletteMode = "model"; root.paletteQuery = ""; root.paletteIndex = 0; input.text = ""; input.forceActiveFocus(); }
+                            }
+                        }
+                        Rectangle {
+                            implicitHeight: 20
+                            implicitWidth: chipEffort.implicitWidth + 10
+                            radius: Appearance.rounding.full
+                            color: Appearance.colors.colLayer2
+                            border.width: 1
+                            border.color: Appearance.colors.colLayer0Border
+                            StyledText {
+                                id: chipEffort
+                                anchors.centerIn: parent
+                                text: root.effort.length > 0 ? root.effort : "effort"
+                                font { family: Appearance.font.family.monospace; pixelSize: Appearance.font.pixelSize.smallest }
+                                color: Appearance.colors.colOnLayer2
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: { root.paletteMode = "effort"; root.paletteQuery = ""; root.paletteIndex = 0; input.text = ""; input.forceActiveFocus(); }
+                            }
+                        }
+                        Rectangle {
+                            implicitHeight: 20
+                            implicitWidth: chipSandbox.implicitWidth + 10
+                            radius: Appearance.rounding.full
+                            color: root.sandbox === "full" ? Appearance.colors.colErrorContainer : Appearance.colors.colLayer2
+                            border.width: 1
+                            border.color: root.sandbox === "full" ? Appearance.colors.colError : Appearance.colors.colLayer0Border
+                            StyledText {
+                                id: chipSandbox
+                                anchors.centerIn: parent
+                                text: root.sandbox
+                                font { family: Appearance.font.family.monospace; pixelSize: Appearance.font.pixelSize.smallest }
+                                color: root.sandbox === "full" ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnLayer2
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: { root.paletteMode = "sandbox"; root.paletteQuery = ""; root.paletteIndex = 0; input.text = ""; input.forceActiveFocus(); }
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        // Stop affordance: only while running.
+                        AiIconButton {
+                            visible: root.running
+                            glyph: "stop"
+                            onClicked: root.runCommand("/stop")
+                        }
+                        // Send hint when idle.
+                        MaterialSymbol {
+                            visible: !root.running
+                            text: "keyboard_return"
+                            iconSize: 16
+                            color: Appearance.colors.colSubtext
                         }
                     }
                 }
-
-                onAccepted: root.send()
             }
         }
     }
+}
 }
