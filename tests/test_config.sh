@@ -19,7 +19,7 @@ else
     pass "no tracked secrets"
 fi
 
-if grep -q '\.github/preview\.webp' README.md && [ -f .github/preview.webp ]; then
+if grep -qE '\.github/preview(-rounded)?\.webp' README.md && { [ -f .github/preview.webp ] || [ -f .github/preview-rounded.webp ]; }; then
     pass "README preview"
 else
     fail_msg "README preview"
