@@ -1,6 +1,6 @@
 # dotfiles
 
-![Hyprland + Quickshell desktop](.github/preview.webp)
+<img src=".github/preview.webp" alt="Hyprland + Quickshell desktop" style="border-radius: 16px;">
 
 Hyprland + Quickshell on Arch. A MangoWM port is parked in `extras/mango/`, not installed.
 
