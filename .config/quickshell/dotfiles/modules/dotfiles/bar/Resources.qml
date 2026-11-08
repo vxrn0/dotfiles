@@ -14,9 +14,7 @@ MouseArea {
     RowLayout {
         id: rowLayout
 
-        // Segments sit next to each other; each carries its own 6px padding, so the
-        // visual gap is 12px and the alert container never touches its neighbour.
-        spacing: 0
+        spacing: 10
         anchors.fill: parent
         anchors.leftMargin: 4
         anchors.rightMargin: 4

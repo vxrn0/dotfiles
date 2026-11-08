@@ -48,7 +48,7 @@ Item { // Bar content region
         border.color: Appearance.colors.colLayer0Border
     }
 
-    RowLayout { // Left section: live harness badges
+    RowLayout { // Left section: clock where the Pilot mark used to be, then harness badges
         id: leftSectionRowLayout
         anchors {
             top: parent.top
@@ -58,10 +58,20 @@ Item { // Bar content region
         }
         spacing: 0
 
+        BarGroup {
+            Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: 8
+
+            ClockWidget {
+                showDate: false
+                Layout.alignment: Qt.AlignVCenter
+            }
+        }
+
         HarnessIcons {
             id: harnessIcons
             Layout.alignment: Qt.AlignVCenter
-            Layout.leftMargin: 8
+            Layout.leftMargin: 4
             Layout.rightMargin: 4
         }
 
@@ -134,30 +144,13 @@ Item { // Bar content region
             visible: Config.options?.bar.borderless
         }
 
-        MouseArea {
+        BarGroup { // Battery stays in the centre now that the clock moved left
             id: rightCenterGroup
             anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: 90
-            implicitHeight: rightCenterGroupContent.implicitHeight
 
-            onPressed: {
-                GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
-            }
-
-            BarGroup {
-                id: rightCenterGroupContent
-                anchors.fill: parent
-
-                ClockWidget {
-                    showDate: false
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.fillWidth: true
-                }
-
-                BatteryIndicator {
-                    visible: (root.useShortenedForm < 2 && Battery.available)
-                    Layout.alignment: Qt.AlignVCenter
-                }
+            BatteryIndicator {
+                visible: (root.useShortenedForm < 2 && Battery.available)
+                Layout.alignment: Qt.AlignVCenter
             }
         }
     }
