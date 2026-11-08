@@ -17,10 +17,14 @@ pgrep -x slurp >/dev/null && exit 0
 # No shell at all: run the fallback immediately instead of waiting for nothing.
 pgrep -x qs >/dev/null || exit 1
 
-# The shell is up, so give it a moment to map the selector layer.
-for _ in $(seq 1 40); do
+# The shell is up, so give it a moment to map the selector layer. On a cold start
+# the first RegionSelection takes seconds to instantiate (QML compile), and a short
+# wait let the fallback fire anyway, so both pickers opened. A warm press shows the
+# layer in ~270 ms; five seconds covers the cold path and only costs a broken shell
+# the same wait before its fallback.
+for _ in $(seq 1 100); do
     hyprctl layers 2>/dev/null | grep -q 'quickshell:regionSelector' && exit 0
-    sleep 0.02
+    sleep 0.05
 done
 
 # The shell is running but never opened the selector (not loaded yet, or crashed).

@@ -60,6 +60,9 @@ Scope {
             Loader {
                 id: sidebarCornerOpenInteractionLoader
                 active: {
+                    // The corner-open interaction belongs to the right sidebar only;
+                    // the left corners are decoration, so they must not steal clicks.
+                    if (!cornerWidget.isRight) return false;
                     if (!Config.options.sidebar.cornerOpen.enable) return false;
                     if (cornerPanelWindow.fullscreen) return false;
                     return (Config.options.sidebar.cornerOpen.bottom == cornerWidget.isBottom);
@@ -149,7 +152,17 @@ Scope {
 
             CornerPanelWindow {
                 screen: modelData
+                corner: RoundCorner.CornerEnum.TopLeft
+                fullscreen: monitorScope.fullscreen
+            }
+            CornerPanelWindow {
+                screen: modelData
                 corner: RoundCorner.CornerEnum.TopRight
+                fullscreen: monitorScope.fullscreen
+            }
+            CornerPanelWindow {
+                screen: modelData
+                corner: RoundCorner.CornerEnum.BottomLeft
                 fullscreen: monitorScope.fullscreen
             }
             CornerPanelWindow {
