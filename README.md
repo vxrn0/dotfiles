@@ -2,11 +2,16 @@
 
 <img src=".github/preview-rounded.webp" alt="Hyprland + Quickshell desktop">
 
+**Under development. Not tested.**
+
 Hyprland + Quickshell on Arch. A MangoWM port is parked in `extras/mango/`, not installed.
 
 ```sh
 git clone https://github.com/xvxrn/dotfiles ~/dotfiles && ~/dotfiles/extras/install.sh
 ```
+
+`extras/install.sh` has a preflight (`--check`), a plan mode (`--dry-run`) and `extras/verify.sh`
+checks the result. None of it has been run on a clean machine.
 
 `AGENTS.md` has the layout and the rules.
 
