@@ -3,60 +3,72 @@ import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Layouts
 
-// One system metric as a Material 3 stat: a tonal glyph plus a tabular percentage.
-// The ring that used to sit here showed no value, so the three metrics were
-// indistinguishable blobs.
+// One system metric, as a Material 3 stat: the number carries the meaning, the icon
+// only labels it. Over threshold the segment becomes an error container; the padded
+// hit area stays the same, so crossing the threshold never shifts the bar.
 Item {
     id: root
     required property string iconName
     required property double percentage
     property int warningThreshold: 100
     property bool shown: true
-    property bool warning: percentage * 100 >= warningThreshold
+    readonly property bool warning: percentage * 100 >= warningThreshold
 
     clip: true
-    visible: width > 0 && height > 0
-    implicitWidth: resourceRowLayout.x < 0 ? 0 : resourceRowLayout.implicitWidth
+    implicitWidth: shown ? content.width + 12 : 0
     implicitHeight: Appearance.sizes.barHeight
 
-    RowLayout {
-        id: resourceRowLayout
-        spacing: 4
-        x: shown ? 0 : -resourceRowLayout.width
+    Rectangle {
+        id: stateLayer
         anchors.verticalCenter: parent.verticalCenter
+        x: content.x - 6
+        width: content.width + 12
+        height: 26
+        radius: height / 2
+        color: root.warning ? Appearance.colors.colErrorContainer : "transparent"
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Easing.OutCubic
+            }
+        }
+    }
+
+    RowLayout {
+        id: content
+        anchors.verticalCenter: parent.verticalCenter
+        x: root.shown ? 6 : -width
+        spacing: 5
 
         MaterialSymbol {
             Layout.alignment: Qt.AlignVCenter
             text: root.iconName
             iconSize: 16
-            fill: 1
-            color: root.warning ? Appearance.colors.colError : Appearance.colors.colOnLayer1
+            fill: 0
+            color: root.warning ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnLayer1
         }
 
         StyledText {
             Layout.alignment: Qt.AlignVCenter
-            // Fixed box, right-aligned: percentages change every second and must not
-            // push the rest of the bar around.
-            Layout.preferredWidth: 26
-            horizontalAlignment: Text.AlignRight
+            // Fixed box, centred: values tick every second and must not push the bar
+            // around, and short values should not leave one side of the metric empty.
+            Layout.preferredWidth: 32
+            horizontalAlignment: Text.AlignHCenter
             text: Math.round(root.percentage * 100) + "%"
-            color: root.warning ? Appearance.colors.colError : Appearance.colors.colOnLayer0
+            color: root.warning ? Appearance.colors.colOnErrorContainer : Appearance.colors.colOnLayer0
             font {
-                pixelSize: Appearance.font.pixelSize.smallest
+                pixelSize: Appearance.font.pixelSize.smallie
                 weight: Font.Medium
             }
         }
     }
 
     Behavior on x {
-        animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
     }
 
     Behavior on implicitWidth {
-        NumberAnimation {
-            duration: Appearance.animation.elementMove.duration
-            easing.type: Appearance.animation.elementMove.type
-            easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
-        }
+        animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
     }
 }

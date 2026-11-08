@@ -1,24 +1,23 @@
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.services
 import qs
-import qs.modules.common.functions
 
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Mpris
 
-// Material 3 media chip: rounded album art, one line of title, filled play/pause
-// button. The old circular ring only encoded playback position, which read as
-// another resource meter.
+// Material 3 media chip: rounded album art, one line of title, and a trailing tonal
+// play/pause button. The split keeps the artwork readable and the action quiet; the
+// old position ring read as a fourth resource meter.
 Item {
     id: root
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
     readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media")
     readonly property string artUrl: activePlayer?.trackArtUrl ?? ""
     readonly property bool hasArt: artUrl.length > 0
-    // Long titles get more room, but never more than a quarter of the screen
-    readonly property real maxTextWidth: Math.max(140, Math.min(300, (root.Window.window?.screen?.width ?? 1920) * 0.24))
+    readonly property real maxTextWidth: Math.max(120, Math.min(280, (root.Window.window?.screen?.width ?? 1920) * 0.22))
 
     Layout.fillHeight: true
     implicitWidth: rowLayout.implicitWidth
@@ -40,7 +39,7 @@ Item {
         }
     }
 
-    MouseArea { // Chip-wide playback control; left click belongs to the button
+    MouseArea { // Chip-wide playback control; the visible button owns the left click
         anchors.fill: parent
         acceptedButtons: Qt.MiddleButton | Qt.BackButton | Qt.ForwardButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
@@ -60,15 +59,17 @@ Item {
     RowLayout {
         id: rowLayout
 
-        spacing: 6
+        spacing: 8
         anchors.fill: parent
 
-        Rectangle { // Album art, falling back to a tonal glyph
+        Rectangle { // Album art; the fallback is a tonal tile, not a stock note glyph
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 24
-            implicitHeight: 24
-            radius: Appearance.rounding.small
+            implicitWidth: 26
+            implicitHeight: 26
+            radius: 8
             color: Appearance.colors.colSecondaryContainer
+            border.width: 1
+            border.color: Appearance.colors.colOutlineVariant
             clip: true
 
             Image {
@@ -77,15 +78,15 @@ Item {
                 source: root.hasArt ? root.artUrl : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                sourceSize.width: 48
-                sourceSize.height: 48
+                sourceSize.width: 52
+                sourceSize.height: 52
             }
 
             MaterialSymbol {
                 anchors.centerIn: parent
                 visible: !root.hasArt
                 text: "music_note"
-                iconSize: 16
+                iconSize: 15
                 fill: 1
                 color: Appearance.colors.colOnSecondaryContainer
             }
@@ -103,23 +104,46 @@ Item {
             }
         }
 
-        Rectangle { // Filled tonal play/pause
+        Rectangle { // Trailing segment of the split button
+            id: playButton
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 22
-            implicitHeight: 22
+            implicitWidth: 26
+            implicitHeight: 26
             radius: width / 2
-            color: Appearance.colors.colPrimaryContainer
+            color: playArea.pressed
+                ? Appearance.colors.colSecondaryContainerActive
+                : playArea.containsMouse
+                    ? Appearance.colors.colSecondaryContainerHover
+                    : Appearance.colors.colSecondaryContainer
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            // Expressive press: the button dips, then springs back.
+            scale: playArea.pressed ? 0.86 : 1
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Easing.OutBack
+                }
+            }
 
             MaterialSymbol {
                 anchors.centerIn: parent
                 text: root.activePlayer?.isPlaying ? "pause" : "play_arrow"
                 iconSize: 16
                 fill: 1
-                color: Appearance.colors.colOnPrimaryContainer
+                color: Appearance.colors.colOnSecondaryContainer
             }
 
             MouseArea {
+                id: playArea
                 anchors.fill: parent
+                hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.activePlayer?.togglePlaying()
             }
