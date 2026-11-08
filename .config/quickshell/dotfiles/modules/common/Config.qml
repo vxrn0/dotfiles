@@ -84,15 +84,6 @@ Singleton {
                 property string thumbnailPath: ""
             }
 
-            property JsonObject ai: JsonObject {
-                property string harness: "codex" // "codex" | "claude" | "opencode"
-                property string cwd: Quickshell.env("HOME")
-                property list<string> codexModels: ["gpt-6.1-terra", "gpt-6.1-sol", "gpt-5.1-codex"]
-                // Only models listed here show up in the shell; add the ones you use
-                property list<string> claudeModels: ["opus", "sonnet"]
-                property list<string> opencodeModels: ["google/gemini-3.5-flash", "openai/gpt-5.1-codex"]
-            }
-
             property JsonObject appearance: JsonObject {
                 property bool extraBackgroundTint: true
                 property int fakeScreenRounding: 2 // 0: None | 1: Always | 2: When not fullscreen

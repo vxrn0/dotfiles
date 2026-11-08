@@ -3,7 +3,6 @@ import Quickshell
 import qs
 
 import qs.modules.common
-import qs.modules.dotfiles.aiChat
 import qs.modules.dotfiles.background
 import qs.modules.dotfiles.bar
 import qs.modules.dotfiles.cheatsheet
@@ -22,7 +21,6 @@ import qs.modules.dotfiles.wallpaperSelector
 Scope {
     PanelLoader { component: Background {} }
     PanelLoader { component: Bar {} }
-    PanelLoader { component: AiChat {} }
     PanelLoader { component: Cheatsheet {} }
     PanelLoader { component: Lock {} }
     PanelLoader { component: NotificationPopup {} }

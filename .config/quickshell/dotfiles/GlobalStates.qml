@@ -16,9 +16,6 @@ Singleton {
     property bool osdVolumeOpen: false
     property bool oskOpen: false
     property bool overlayOpen: false
-    property bool aiChatOpen: false
-    // Bumped by the SUPER+Tab global shortcut; the panel resets when it changes.
-    property int aiChatResetRequested: 0
     property bool cheatsheetOpen: false
     property bool overviewOpen: false
     property bool regionSelectorOpen: false
@@ -34,16 +31,10 @@ Singleton {
 
     onSidebarRightOpenChanged: {
         if (GlobalStates.sidebarRightOpen) {
-            root.aiChatOpen = false;
             Notifications.timeoutAll();
             Notifications.markAllRead();
         }
     }
-    onAiChatOpenChanged: {
-        if (root.aiChatOpen)
-            root.sidebarRightOpen = false;
-    }
-
     GlobalShortcut {
         name: "workspaceNumber"
         description: "Hold to show workspace numbers, release to show icons"
