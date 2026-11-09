@@ -10,7 +10,7 @@ import qs.modules.common.functions
 // cluster is one pill and disappears when nothing is running.
 RowLayout {
     id: root
-    spacing: 8
+    spacing: 10
 
     property bool codexRunning: false
     property bool claudeRunning: false

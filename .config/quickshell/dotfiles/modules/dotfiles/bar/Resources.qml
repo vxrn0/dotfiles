@@ -7,17 +7,15 @@ MouseArea {
     id: root
     property bool borderless: Config.options.bar.borderless
     property bool alwaysShowAllResources: false
-    implicitWidth: rowLayout.implicitWidth + rowLayout.anchors.leftMargin + rowLayout.anchors.rightMargin
+    implicitWidth: rowLayout.implicitWidth
     implicitHeight: Appearance.sizes.barHeight
     hoverEnabled: !Config.options.bar.tooltips.clickToShow
 
     RowLayout {
         id: rowLayout
 
-        spacing: 0
+        spacing: 12
         anchors.fill: parent
-        anchors.leftMargin: 4
-        anchors.rightMargin: 4
 
         Resource {
             iconName: "memory"

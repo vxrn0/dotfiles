@@ -1,9 +1,8 @@
 import qs.modules.common
 import qs.services
-import qs.modules.common.widgets
 import QtQuick
 
-// Clock in the shared bar anatomy: text only, same size and weight as every value.
+// Clock: text only, the first thing in the bar, like the Pixel status bar.
 Item {
     id: root
     property bool showDate: true

@@ -3,10 +3,9 @@ import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Layouts
 
-// The bar's single item anatomy: optional 16px glyph, 13px medium label, optional
-// trailing glyph. Every cluster uses this, so icons, text and values stay on one scale.
-// The glyph is the label (onSurfaceVariant), the text is the content (onSurface);
-// state is shown by color only, never by adding a second surface inside the pill.
+// The bar's single item anatomy: an optional 16px glyph, a 13px medium label, an
+// optional trailing glyph. There is no container of its own — the bar surface is the
+// container, the way the Pixel status bar works. State is colour only.
 Item {
     id: root
     property string glyph: ""
@@ -26,17 +25,17 @@ Item {
     readonly property bool hovered: itemMouse.containsMouse && interactive
     readonly property color glyphColor: warning ? Appearance.colors.colError
         : (active || hovered) ? Appearance.colors.colPrimary
-        : Appearance.colors.colOnLayer1
+        : Appearance.colors.colOnLayer0
     readonly property color labelColor: warning ? Appearance.colors.colError
         : (active || hovered) ? Appearance.colors.colPrimary
         : Appearance.colors.colOnLayer0
 
-    implicitWidth: shown ? content.implicitWidth + 8 : 0
+    implicitWidth: shown ? content.implicitWidth : 0
     implicitHeight: 24
     clip: true
     transformOrigin: Item.Center
 
-    scale: interactive && itemMouse.pressed ? 0.94 : 1
+    scale: interactive && itemMouse.pressed ? 0.96 : 1
     Behavior on scale {
         NumberAnimation {
             duration: 120
@@ -56,16 +55,16 @@ Item {
             visible: root.iconSource.length === 0 && root.glyph.length > 0
             text: root.glyph
             iconSize: 16
-            fill: 0
+            fill: 1
             color: root.glyphColor
         }
 
         CustomIcon {
             visible: root.iconSource.length > 0
-            Layout.preferredWidth: 16
-            Layout.preferredHeight: 16
             width: 16
             height: 16
+            Layout.preferredWidth: 16
+            Layout.preferredHeight: 16
             source: root.iconSource
             colorize: true
             color: root.glyphColor
@@ -88,7 +87,7 @@ Item {
             visible: root.trailingGlyph.length > 0
             text: root.trailingGlyph
             iconSize: 16
-            fill: 0
+            fill: 1
             color: root.glyphColor
         }
     }

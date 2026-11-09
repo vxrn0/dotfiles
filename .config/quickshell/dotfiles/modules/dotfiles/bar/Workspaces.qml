@@ -20,7 +20,6 @@ ButtonMouseArea {
     }
 
     readonly property real barThickness: Appearance.sizes.barHeight
-    readonly property real widgetPadding: 6
     readonly property real dotSize: 8
     readonly property real activeWidth: 22
     readonly property int workspaceIndexInGroup: Math.max(0, (monitor?.activeWorkspace?.id - 1) % Math.max(1, wsModel.shownCount))
@@ -70,8 +69,7 @@ ButtonMouseArea {
             Hyprland.dispatch(`hl.dsp.focus({workspace = "r-1"})`);
     }
 
-    // No track of its own: the BarGroup pill is the surface, a second rounded rectangle
-    // inside it was a nested container.
+    // No track: the bar surface is the only container.
     Row {
         id: indicatorRow
         anchors.centerIn: parent

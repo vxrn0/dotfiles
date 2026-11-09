@@ -3,8 +3,8 @@ import qs.services
 import QtQuick
 import QtQuick.Layouts
 
-// Battery in the shared bar anatomy: a level glyph, the percentage, and a bolt while
-// charging. The old inset progress bar was a second surface inside the pill.
+// Battery: a level glyph, the percentage, and a bolt while charging — the Pixel
+// status-bar idiom, flat on the bar surface.
 Item {
     id: root
     readonly property bool isCharging: Battery.isCharging
@@ -30,7 +30,7 @@ Item {
         anchors.centerIn: parent
         glyph: root.levelGlyph
         label: Math.round(root.percentage * 100) + "%"
-        valueWidth: 34
+        valueWidth: 30
         warning: root.isLow
         active: root.isCharging
         trailingGlyph: root.isCharging && root.percentage < 1 ? "bolt" : ""

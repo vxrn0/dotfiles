@@ -10,6 +10,6 @@ BarItem {
 
     glyph: root.iconName
     label: Math.round(root.percentage * 100) + "%"
-    valueWidth: 34
+    valueWidth: 30
     warning: root.percentage * 100 >= root.warningThreshold
 }
