@@ -31,8 +31,8 @@ Item {
         : (active || hovered) ? Appearance.colors.colPrimary
         : Appearance.colors.colOnLayer0
 
-    implicitWidth: shown ? content.implicitWidth + 8 : 0
-    implicitHeight: 22
+    implicitWidth: shown ? content.implicitWidth + 10 : 0
+    implicitHeight: 28
     clip: true
     transformOrigin: Item.Center
 
@@ -50,22 +50,22 @@ Item {
     RowLayout {
         id: content
         anchors.centerIn: parent
-        spacing: 5
+        spacing: 6
 
         MaterialSymbol {
             visible: root.iconSource.length === 0 && root.glyph.length > 0
             text: root.glyph
-            iconSize: 16
+            iconSize: 20
             fill: 0
             color: root.glyphColor
         }
 
         CustomIcon {
             visible: root.iconSource.length > 0
-            Layout.preferredWidth: 16
-            Layout.preferredHeight: 16
-            width: 16
-            height: 16
+            Layout.preferredWidth: 18
+            Layout.preferredHeight: 18
+            width: 18
+            height: 18
             source: root.iconSource
             colorize: true
             color: root.glyphColor
@@ -78,16 +78,17 @@ Item {
             text: root.label
             color: root.labelColor
             font {
-                pixelSize: Appearance.font.pixelSize.smallie
-                weight: Font.Medium
+                pixelSize: Appearance.font.pixelSize.normal
+                weight: Font.DemiBold
                 features: ["tnum"]
+                variableAxes: ({ "wght": 650 })
             }
         }
 
         MaterialSymbol {
             visible: root.trailingGlyph.length > 0
             text: root.trailingGlyph
-            iconSize: 16
+            iconSize: 20
             fill: 0
             color: root.glyphColor
         }

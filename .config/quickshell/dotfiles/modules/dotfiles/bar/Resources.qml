@@ -6,7 +6,7 @@ import QtQuick.Layouts
 MouseArea {
     id: root
     implicitWidth: rowLayout.implicitWidth
-    implicitHeight: 22
+    implicitHeight: 28
     hoverEnabled: !Config.options.bar.tooltips.clickToShow
 
     RowLayout {

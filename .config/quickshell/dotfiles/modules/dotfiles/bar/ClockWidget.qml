@@ -9,13 +9,13 @@ Item {
     property bool showDate: true
 
     implicitWidth: item.implicitWidth
-    implicitHeight: 22
+    implicitHeight: 28
 
     BarItem {
         id: item
         anchors.centerIn: parent
         label: root.showDate ? DateTime.time + "  " + DateTime.longDate : DateTime.time
-        valueWidth: 40
+        valueWidth: 48
     }
 
     MouseArea {

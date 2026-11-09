@@ -23,14 +23,14 @@ Item {
     }
 
     implicitWidth: item.implicitWidth
-    implicitHeight: 22
+    implicitHeight: 28
 
     BarItem {
         id: item
         anchors.centerIn: parent
         glyph: root.levelGlyph
         label: Math.round(root.percentage * 100) + "%"
-        valueWidth: 32
+        valueWidth: 38
         warning: root.isLow
         active: root.isCharging
         trailingGlyph: root.isCharging && root.percentage < 1 ? "bolt" : ""

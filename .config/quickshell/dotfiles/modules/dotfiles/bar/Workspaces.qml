@@ -19,16 +19,16 @@ ButtonMouseArea {
         monitor: root.monitor
     }
 
-    readonly property real widgetPadding: 6
-    readonly property real dotSize: 8
-    readonly property real activeWidth: 22
+    readonly property real widgetPadding: 7
+    readonly property real dotSize: 10
+    readonly property real activeWidth: 28
     readonly property int workspaceIndexInGroup: Math.max(0, (monitor?.activeWorkspace?.id - 1) % Math.max(1, wsModel.shownCount))
 
     Layout.alignment: Qt.AlignVCenter
     Layout.fillWidth: false
     Layout.fillHeight: true
     implicitWidth: indicatorRow.implicitWidth
-    implicitHeight: 22
+    implicitHeight: 28
 
     function workspaceIndexAt(px) {
         let best = 0;

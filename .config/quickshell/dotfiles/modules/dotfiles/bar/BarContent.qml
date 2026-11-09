@@ -122,7 +122,7 @@ Item { // Bar content region
 
                 Layout.alignment: Qt.AlignVCenter
                 implicitWidth: indicatorsRowLayout.implicitWidth + 8
-                implicitHeight: 22
+                implicitHeight: 28
 
                 buttonRadius: Appearance.rounding.full
                 // No fill and no ripple: the click wave would read as a lit-up background
@@ -160,7 +160,7 @@ Item { // Bar content region
                         }
                         MaterialSymbol {
                             text: "volume_off"
-                            iconSize: 16
+                            iconSize: 20
                             color: rightSidebarButton.colText
                         }
                     }
@@ -173,7 +173,7 @@ Item { // Bar content region
                         }
                         MaterialSymbol {
                             text: "mic_off"
-                            iconSize: 16
+                            iconSize: 20
                             color: rightSidebarButton.colText
                         }
                     }
@@ -193,7 +193,7 @@ Item { // Bar content region
                     }
                     MaterialSymbol {
                         text: Network.materialSymbol
-                        iconSize: 16
+                        iconSize: 20
                         color: rightSidebarButton.colText
                     }
                     MaterialSymbol {
@@ -201,7 +201,7 @@ Item { // Bar content region
                         // Android shows a bluetooth icon only while the adapter is on; a slashed glyph reads as broken
                         visible: BluetoothStatus.available && BluetoothStatus.enabled
                         text: BluetoothStatus.connected ? "bluetooth_connected" : "bluetooth"
-                        iconSize: 16
+                        iconSize: 20
                         color: rightSidebarButton.colText
                     }
                 }

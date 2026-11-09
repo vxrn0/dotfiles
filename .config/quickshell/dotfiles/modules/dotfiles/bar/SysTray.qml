@@ -81,8 +81,8 @@ Item {
 
             Layout.fillHeight: !root.vertical
             Layout.fillWidth: root.vertical
-            background.implicitWidth: 22
-            background.implicitHeight: 22
+            background.implicitWidth: 28
+            background.implicitHeight: 28
             background.anchors.centerIn: this
             colBackgroundToggled: Appearance.colors.colSecondaryContainer
             colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
@@ -90,7 +90,7 @@ Item {
 
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
-                iconSize: 16
+                iconSize: 20
                 text: "expand_more"
                 horizontalAlignment: Text.AlignHCenter
                 color: root.trayOverflowOpen ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer2
