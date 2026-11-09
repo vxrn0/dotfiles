@@ -79,26 +79,9 @@ Item { // Bar content region
         }
         spacing: 4
 
-        BarGroup {
-            id: middleCenterGroup
+        Workspaces { // The workspace scroll bar is its own capsule, not nested in a pill
+            id: workspacesWidget
             anchors.verticalCenter: parent.verticalCenter
-            padding: workspacesWidget.widgetPadding
-
-            Workspaces {
-                id: workspacesWidget
-                Layout.fillHeight: true
-                MouseArea {
-                    // Right-click to toggle overview
-                    anchors.fill: parent
-                    acceptedButtons: Qt.RightButton
-
-                    onPressed: event => {
-                        if (event.button === Qt.RightButton) {
-                            GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
-                        }
-                    }
-                }
-            }
         }
     }
 
