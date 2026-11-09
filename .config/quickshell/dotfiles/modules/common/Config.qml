@@ -152,7 +152,6 @@ Singleton {
                     }
                 }
                 property bool borderless: false // true for no grouping of items
-                property string topLeftIcon: "spark" // Options: "distro" or any icon name in ~/.config/quickshell/dotfiles/assets/icons
                 property bool showBackground: true
                 property JsonObject resources: JsonObject {
                     property bool alwaysShowSwap: true
@@ -163,13 +162,7 @@ Singleton {
                 }
                 property list<string> screenList: [] // List of names, like "eDP-1", find out with 'hyprctl monitors' command
                 property JsonObject workspaces: JsonObject {
-                    property bool monochromeIcons: true
                     property int shown: 5
-                    property bool showAppIcons: false
-                    property bool alwaysShowNumbers: true
-                    property int showNumberDelay: 300 // milliseconds
-                    property list<string> numberMap: ["1", "2"] // Characters to show instead of numbers on workspace indicator
-                    property bool useNerdFont: false
                 }
             property JsonObject indicators: JsonObject {
                     property JsonObject notifications: JsonObject {

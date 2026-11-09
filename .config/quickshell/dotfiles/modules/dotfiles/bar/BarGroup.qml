@@ -5,22 +5,27 @@ import QtQuick.Layouts
 Item {
     id: root
     property bool vertical: false
-    property real padding: 5
+    property real padding: 4
+    property real itemSpacing: 4
     implicitWidth: vertical ? Appearance.sizes.baseVerticalBarWidth : (gridLayout.implicitWidth + padding * 2)
     implicitHeight: vertical ? (gridLayout.implicitHeight + padding * 2) : Appearance.sizes.baseBarHeight
     default property alias items: gridLayout.children
+
+    Behavior on implicitWidth {
+        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+    }
 
     Rectangle {
         id: background
         anchors {
             fill: parent
-            topMargin: root.vertical ? 0 : 4
-            bottomMargin: root.vertical ? 0 : 4
+            topMargin: root.vertical ? 0 : 5
+            bottomMargin: root.vertical ? 0 : 5
             leftMargin: root.vertical ? 4 : 0
             rightMargin: root.vertical ? 4 : 0
         }
         color: Config.options?.bar.borderless ? "transparent" : Appearance.colors.colLayer1
-        radius: Appearance.rounding.small
+        radius: Appearance.rounding.full
     }
 
     GridLayout {
@@ -35,7 +40,7 @@ Item {
             bottom: root.vertical ? parent.bottom : undefined
             margins: root.padding
         }
-        columnSpacing: 4
+        columnSpacing: root.itemSpacing
         rowSpacing: 12
     }
 }

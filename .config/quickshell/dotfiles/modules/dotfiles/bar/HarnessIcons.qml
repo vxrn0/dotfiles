@@ -6,13 +6,16 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 
+// Which agent CLIs are running, as 16px brand marks in the shared item scale. The whole
+// cluster is one pill and disappears when nothing is running.
 RowLayout {
     id: root
-    spacing: 6
+    spacing: 8
 
     property bool codexRunning: false
     property bool claudeRunning: false
     property bool opencodeRunning: false
+    readonly property bool anyRunning: codexRunning || claudeRunning || opencodeRunning
     property var found: ({})
 
     Process {
@@ -52,8 +55,8 @@ RowLayout {
         delegate: Item {
             id: iconItem
             required property var modelData
-            implicitWidth: modelData.running ? 20 : 0
-            implicitHeight: 20
+            implicitWidth: modelData.running ? 16 : 0
+            implicitHeight: 16
             opacity: modelData.running ? 1 : 0
             visible: opacity > 0
 
@@ -68,7 +71,7 @@ RowLayout {
                 anchors.fill: parent
                 source: iconItem.modelData.source
                 colorize: true
-                color: Appearance.colors.colOnLayer0
+                color: Appearance.colors.colOnLayer1
             }
         }
     }

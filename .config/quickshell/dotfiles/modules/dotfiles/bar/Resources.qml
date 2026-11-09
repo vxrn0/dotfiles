@@ -5,19 +5,15 @@ import QtQuick.Layouts
 
 MouseArea {
     id: root
-    property bool borderless: Config.options.bar.borderless
-    property bool alwaysShowAllResources: false
-    implicitWidth: rowLayout.implicitWidth + rowLayout.anchors.leftMargin + rowLayout.anchors.rightMargin
-    implicitHeight: Appearance.sizes.barHeight
+    implicitWidth: rowLayout.implicitWidth
+    implicitHeight: 22
     hoverEnabled: !Config.options.bar.tooltips.clickToShow
 
     RowLayout {
         id: rowLayout
 
-        spacing: 10
+        spacing: 0
         anchors.fill: parent
-        anchors.leftMargin: 4
-        anchors.rightMargin: 4
 
         Resource {
             iconName: "memory"
@@ -28,18 +24,14 @@ MouseArea {
         Resource {
             iconName: "swap_horiz"
             percentage: ResourceUsage.swapUsedPercentage
-            shown: (Config.options.bar.resources.alwaysShowSwap && percentage > 0) ||
-                (MprisController.activePlayer?.trackTitle == null) ||
-                root.alwaysShowAllResources
+            shown: Config.options.bar.resources.alwaysShowSwap && Math.round(percentage * 100) > 0
             warningThreshold: Config.options.bar.resources.swapWarningThreshold
         }
 
         Resource {
             iconName: "speed"
             percentage: ResourceUsage.cpuUsage
-            shown: Config.options.bar.resources.alwaysShowCpu ||
-                !(MprisController.activePlayer?.trackTitle?.length > 0) ||
-                root.alwaysShowAllResources
+            shown: Config.options.bar.resources.alwaysShowCpu
             warningThreshold: Config.options.bar.resources.cpuWarningThreshold
         }
     }

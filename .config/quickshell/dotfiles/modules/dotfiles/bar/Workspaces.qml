@@ -19,17 +19,16 @@ ButtonMouseArea {
         monitor: root.monitor
     }
 
-    readonly property real barThickness: Appearance.sizes.barHeight
-    readonly property real widgetPadding: 4
-    readonly property real dotSize: 12
-    readonly property real activeWidth: 30
+    readonly property real widgetPadding: 6
+    readonly property real dotSize: 8
+    readonly property real activeWidth: 22
     readonly property int workspaceIndexInGroup: Math.max(0, (monitor?.activeWorkspace?.id - 1) % Math.max(1, wsModel.shownCount))
 
     Layout.alignment: Qt.AlignVCenter
     Layout.fillWidth: false
     Layout.fillHeight: true
-    implicitWidth: track.implicitWidth
-    implicitHeight: barThickness
+    implicitWidth: indicatorRow.implicitWidth
+    implicitHeight: 22
 
     function workspaceIndexAt(px) {
         let best = 0;
@@ -70,41 +69,33 @@ ButtonMouseArea {
             Hyprland.dispatch(`hl.dsp.focus({workspace = "r-1"})`);
     }
 
-    Rectangle { // Track
-        id: track
+    // No track of its own: the BarGroup pill is the surface, a second rounded rectangle
+    // inside it was a nested container.
+    Row {
+        id: indicatorRow
         anchors.centerIn: parent
-        implicitWidth: indicatorRow.implicitWidth + root.widgetPadding * 2
-        implicitHeight: root.dotSize + 8
-        radius: height / 2
-        color: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.4)
+        spacing: 6
 
-        Row {
-            id: indicatorRow
-            anchors.centerIn: parent
-            spacing: 7
+        Repeater {
+            model: wsModel.shownCount
 
-            Repeater {
-                model: wsModel.shownCount
+            Rectangle {
+                required property int index
+                readonly property bool active: index === root.workspaceIndexInGroup
+                readonly property bool hovered: root.containsMouse && root.workspaceIndexAt(root.mouseX) === index
 
-                Rectangle {
-                    id: indicator
-                    required property int index
-                    readonly property bool active: index === root.workspaceIndexInGroup
-                    readonly property bool hovered: root.containsMouse && root.workspaceIndexAt(root.mouseX) === index
+                width: active ? root.activeWidth : root.dotSize
+                height: root.dotSize
+                radius: height / 2
+                color: active
+                    ? Appearance.colors.colPrimary
+                    : ColorUtils.transparentize(Appearance.colors.colOnLayer1, hovered ? 0.25 : 0.55)
 
-                    width: active ? root.activeWidth : root.dotSize
-                    height: root.dotSize
-                    radius: height / 2
-                    color: active
-                        ? Appearance.colors.colPrimary
-                        : ColorUtils.transparentize(Appearance.colors.colOnLayer1, hovered ? 0.25 : 0.55)
-
-                    Behavior on width {
-                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                    }
-                    Behavior on color {
-                        animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
-                    }
+                Behavior on width {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
+                Behavior on color {
+                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
                 }
             }
         }

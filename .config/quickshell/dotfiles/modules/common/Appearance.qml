@@ -387,9 +387,6 @@ Singleton {
     sizes: QtObject {
         property real baseBarHeight: 40
         property real barHeight: baseBarHeight + root.sizes.hyprlandGapsOut * 2
-        property real barCenterSideModuleWidth: 360
-        property real barCenterSideModuleWidthShortened: 280
-        property real barCenterSideModuleWidthHellaShortened: 190
         property real barShortenScreenWidthThreshold: 1200 // Shorten if screen width is at most this value
         property real barHellaShortenScreenWidthThreshold: 1000 // Shorten even more...
         property real elevationMargin: 10

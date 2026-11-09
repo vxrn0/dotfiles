@@ -14,7 +14,6 @@ Item {
     property bool vertical: false
     property bool invertSide: false
     property bool trayOverflowOpen: false
-    property bool showSeparator: true
     property bool showOverflowMenu: true
     property var activeMenu: null
 
@@ -70,7 +69,7 @@ Item {
         columns: root.vertical ? 1 : -1
         anchors.fill: parent
         rowSpacing: 8
-        columnSpacing: 15
+        columnSpacing: 8
 
         RippleButton {
             id: trayOverflowButton
@@ -82,8 +81,8 @@ Item {
 
             Layout.fillHeight: !root.vertical
             Layout.fillWidth: root.vertical
-            background.implicitWidth: 24
-            background.implicitHeight: 24
+            background.implicitWidth: 22
+            background.implicitHeight: 22
             background.anchors.centerIn: this
             colBackgroundToggled: Appearance.colors.colSecondaryContainer
             colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
@@ -91,7 +90,7 @@ Item {
 
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
-                iconSize: Appearance.font.pixelSize.larger
+                iconSize: 16
                 text: "expand_more"
                 horizontalAlignment: Text.AlignHCenter
                 color: root.trayOverflowOpen ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer2
@@ -144,14 +143,6 @@ Item {
                     root.setExtraWindowAndGrabFocus(qsWindow);
                 }
             }
-        }
-
-        StyledText {
-            Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-            font.pixelSize: Appearance.font.pixelSize.larger
-            color: Appearance.colors.colSubtext
-            text: "•"
-            visible: root.showSeparator && SystemTray.items.values.length > 0
         }
     }
 }

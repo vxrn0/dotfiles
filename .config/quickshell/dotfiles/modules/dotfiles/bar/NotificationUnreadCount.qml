@@ -6,9 +6,10 @@ import qs.modules.common.widgets
 MaterialSymbol {
     id: root
     readonly property bool showUnreadCount: Config.options.bar.indicators.notifications.showUnreadCount
+    property color iconColor: Appearance.colors.colOnLayer1
     text: Notifications.silent ? "notifications_paused" : "notifications"
-    iconSize: Appearance.font.pixelSize.larger
-    color: rightSidebarButton.colText
+    iconSize: 16
+    color: root.iconColor
 
     Rectangle {
         id: notifPing
