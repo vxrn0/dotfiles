@@ -1,19 +1,40 @@
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.services
 import QtQuick
+import QtQuick.Layouts
 
-// Clock: text only, the first thing in the bar, like the Pixel status bar.
 Item {
     id: root
+    property bool borderless: Config.options.bar.borderless
     property bool showDate: true
-
-    implicitWidth: item.implicitWidth
+    implicitWidth: rowLayout.implicitWidth
     implicitHeight: Appearance.sizes.barHeight
 
-    BarItem {
-        id: item
+    RowLayout {
+        id: rowLayout
         anchors.centerIn: parent
-        label: root.showDate ? DateTime.time + "  " + DateTime.longDate : DateTime.time
+        spacing: 4
+
+        StyledText {
+            font.pixelSize: Appearance.font.pixelSize.normal
+            color: Appearance.colors.colOnLayer1
+            text: DateTime.time
+        }
+
+        StyledText {
+            visible: root.showDate
+            font.pixelSize: Appearance.font.pixelSize.small
+            color: Appearance.colors.colOnLayer1
+            text: "•"
+        }
+
+        StyledText {
+            visible: root.showDate
+            font.pixelSize: Appearance.font.pixelSize.small
+            color: Appearance.colors.colOnLayer1
+            text: DateTime.longDate
+        }
     }
 
     MouseArea {

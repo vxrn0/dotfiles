@@ -7,8 +7,8 @@ MaterialSymbol {
     id: root
     readonly property bool showUnreadCount: Config.options.bar.indicators.notifications.showUnreadCount
     text: Notifications.silent ? "notifications_paused" : "notifications"
-    iconSize: 16
-    color: Appearance.colors.colOnLayer0
+    iconSize: Appearance.font.pixelSize.larger
+    color: rightSidebarButton.colText
 
     Rectangle {
         id: notifPing

@@ -19,8 +19,8 @@ MouseArea {
 
     hoverEnabled: true
     acceptedButtons: Qt.LeftButton | Qt.RightButton
-    implicitWidth: 16
-    implicitHeight: 16
+    implicitWidth: 20
+    implicitHeight: 20
     onPressed: (event) => {
         switch (event.button) {
         case Qt.LeftButton:
@@ -91,9 +91,7 @@ MouseArea {
             ColorOverlay {
                 anchors.fill: desaturatedIcon
                 source: desaturatedIcon
-                color: root.containsMouse
-                    ? Appearance.colors.colPrimary
-                    : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.9)
+                color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.9)
             }
         }
     }

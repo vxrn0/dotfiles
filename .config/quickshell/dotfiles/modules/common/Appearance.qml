@@ -386,8 +386,7 @@ Singleton {
 
     sizes: QtObject {
         property real baseBarHeight: 40
-        // The bar is attached to the screen edge, so its height is the content height.
-        property real barHeight: baseBarHeight
+        property real barHeight: baseBarHeight + root.sizes.hyprlandGapsOut * 2
         property real barCenterSideModuleWidth: 360
         property real barCenterSideModuleWidthShortened: 280
         property real barCenterSideModuleWidthHellaShortened: 190
