@@ -14,7 +14,7 @@ MouseArea {
     RowLayout {
         id: rowLayout
 
-        spacing: 10
+        spacing: 0
         anchors.fill: parent
         anchors.leftMargin: 4
         anchors.rightMargin: 4

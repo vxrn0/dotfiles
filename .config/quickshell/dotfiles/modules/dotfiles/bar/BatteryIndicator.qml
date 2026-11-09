@@ -1,63 +1,48 @@
 import qs.modules.common
-import qs.modules.common.widgets
 import qs.services
 import QtQuick
 import QtQuick.Layouts
 
-MouseArea {
+// Battery in the shared bar anatomy: a level glyph, the percentage, and a bolt while
+// charging. The old inset progress bar was a second surface inside the pill.
+Item {
     id: root
-    property bool borderless: Config.options.bar.borderless
-    readonly property var chargeState: Battery.chargeState
     readonly property bool isCharging: Battery.isCharging
-    readonly property bool isPluggedIn: Battery.isPluggedIn
     readonly property real percentage: Battery.percentage
-    readonly property bool isLow: percentage <= Config.options.battery.low / 100
+    readonly property bool isLow: percentage <= Config.options.battery.low / 100 && !isCharging
 
-    implicitWidth: batteryProgress.implicitWidth
-    implicitHeight: Appearance.sizes.barHeight
-
-    hoverEnabled: !Config.options.bar.tooltips.clickToShow
-
-    ClippedProgressBar {
-        id: batteryProgress
-        anchors.centerIn: parent
-        value: percentage
-        highlightColor: (isLow && !isCharging) ? Appearance.m3colors.m3error : Appearance.colors.colOnSecondaryContainer
-
-        Item {
-            anchors.centerIn: parent
-            width: batteryProgress.valueBarWidth
-            height: batteryProgress.valueBarHeight
-
-            RowLayout {
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                    bottom: parent.bottom
-                    bottomMargin: (parent.height - height) / 2
-                }
-                spacing: 0
-
-                MaterialSymbol {
-                    id: boltIcon
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.leftMargin: -2
-                    Layout.rightMargin: -2
-                    fill: 1
-                    text: "bolt"
-                    iconSize: Appearance.font.pixelSize.smaller
-                    visible: isCharging && percentage < 1 // TODO: animation
-                }
-                StyledText {
-                    Layout.alignment: Qt.AlignVCenter
-                    font: batteryProgress.font
-                    text: batteryProgress.text
-                }
-            }
-        }
+    // The glyph carries the coarse level, the number the exact one.
+    readonly property string levelGlyph: {
+        if (percentage >= 0.95) return "battery_full";
+        if (percentage >= 0.8) return "battery_6_bar";
+        if (percentage >= 0.6) return "battery_5_bar";
+        if (percentage >= 0.4) return "battery_4_bar";
+        if (percentage >= 0.25) return "battery_3_bar";
+        if (percentage >= 0.1) return "battery_2_bar";
+        return "battery_alert";
     }
 
-    BatteryPopup {
-        id: batteryPopup
-        hoverTarget: root
+    implicitWidth: item.implicitWidth
+    implicitHeight: Appearance.sizes.barHeight
+
+    BarItem {
+        id: item
+        anchors.centerIn: parent
+        glyph: root.levelGlyph
+        label: Math.round(root.percentage * 100) + "%"
+        valueWidth: 34
+        warning: root.isLow
+        active: root.isCharging
+        trailingGlyph: root.isCharging && root.percentage < 1 ? "bolt" : ""
+    }
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        hoverEnabled: !Config.options.bar.tooltips.clickToShow
+
+        BatteryPopup {
+            hoverTarget: mouseArea
+        }
     }
 }

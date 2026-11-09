@@ -68,11 +68,17 @@ Item { // Bar content region
             }
         }
 
-        HarnessIcons {
-            id: harnessIcons
+        BarGroup {
             Layout.alignment: Qt.AlignVCenter
             Layout.leftMargin: 4
-            Layout.rightMargin: 4
+            visible: harnessIcons.anyRunning
+
+            HarnessIcons {
+                id: harnessIcons
+                Layout.alignment: Qt.AlignVCenter
+                Layout.leftMargin: 4
+                Layout.rightMargin: 4
+            }
         }
 
         Item {
@@ -147,6 +153,7 @@ Item { // Bar content region
         BarGroup { // Battery stays in the centre now that the clock moved left
             id: rightCenterGroup
             anchors.verticalCenter: parent.verticalCenter
+            visible: root.useShortenedForm < 2 && Battery.available
 
             BatteryIndicator {
                 visible: (root.useShortenedForm < 2 && Battery.available)
@@ -155,7 +162,7 @@ Item { // Bar content region
         }
     }
 
-    RowLayout { // Right section: sidebar toggle with indicators
+    RowLayout { // Right section: status pill and tray pill, same item scale as the rest
         id: rightSectionRowLayout
         anchors {
             top: parent.top
@@ -163,105 +170,113 @@ Item { // Bar content region
             left: middleSection.right
             right: parent.right
         }
-        spacing: 5
+        spacing: 4
         layoutDirection: Qt.RightToLeft
 
-        RippleButton { // Right sidebar button
-            id: rightSidebarButton
+        BarGroup { // Sidebar toggle with indicators
+            Layout.alignment: Qt.AlignVCenter
+            Layout.rightMargin: 8
 
-            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-            Layout.rightMargin: Appearance.rounding.screenRounding
-            Layout.fillWidth: false
+            RippleButton {
+                id: rightSidebarButton
 
-            implicitWidth: indicatorsRowLayout.implicitWidth + 10 * 2
-            implicitHeight: indicatorsRowLayout.implicitHeight + 5 * 2
+                Layout.alignment: Qt.AlignVCenter
+                implicitWidth: indicatorsRowLayout.implicitWidth + 8
+                implicitHeight: 24
 
-            buttonRadius: Appearance.rounding.full
-            // No fill and no ripple: the click wave would read as a lit-up background
-            rippleEnabled: false
-            colBackground: "transparent"
-            colBackgroundHover: "transparent"
-            colRipple: Appearance.colors.colLayer1Active
-            colBackgroundToggled: "transparent"
-            colBackgroundToggledHover: "transparent"
-            colRippleToggled: Appearance.colors.colLayer1Active
-            toggled: GlobalStates.sidebarRightOpen
-            property color colText: toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer0
+                buttonRadius: Appearance.rounding.full
+                // No fill and no ripple: the click wave would read as a lit-up background
+                rippleEnabled: false
+                colBackground: "transparent"
+                colBackgroundHover: "transparent"
+                colRipple: Appearance.colors.colLayer1Active
+                colBackgroundToggled: "transparent"
+                colBackgroundToggledHover: "transparent"
+                colRippleToggled: Appearance.colors.colLayer1Active
+                toggled: GlobalStates.sidebarRightOpen
+                // Same hover rule as BarItem: the glyph goes primary, the pill never lights up
+                property color colText: (toggled || hovered) ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
 
-            Behavior on colText {
-                animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
-            }
+                Behavior on colText {
+                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                }
 
-            onPressed: {
-                GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
-            }
+                onPressed: {
+                    GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                }
 
-            RowLayout {
-                id: indicatorsRowLayout
-                anchors.centerIn: parent
-                property real realSpacing: 15
-                spacing: 0
+                RowLayout {
+                    id: indicatorsRowLayout
+                    anchors.centerIn: parent
+                    property real realSpacing: 10
+                    spacing: 0
 
-                Revealer {
-                    reveal: Audio.sink?.audio?.muted ?? false
-                    Layout.fillHeight: true
-                    Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
-                    Behavior on Layout.rightMargin {
-                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                    Revealer {
+                        reveal: Audio.sink?.audio?.muted ?? false
+                        Layout.fillHeight: true
+                        Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
+                        Behavior on Layout.rightMargin {
+                            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                        }
+                        MaterialSymbol {
+                            text: "volume_off"
+                            iconSize: 16
+                            color: rightSidebarButton.colText
+                        }
+                    }
+                    Revealer {
+                        reveal: Audio.source?.audio?.muted ?? false
+                        Layout.fillHeight: true
+                        Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
+                        Behavior on Layout.rightMargin {
+                            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                        }
+                        MaterialSymbol {
+                            text: "mic_off"
+                            iconSize: 16
+                            color: rightSidebarButton.colText
+                        }
+                    }
+                    Revealer {
+                        reveal: Notifications.silent || Notifications.unread > 0
+                        Layout.fillHeight: true
+                        Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
+                        implicitHeight: reveal ? notificationUnreadCount.implicitHeight : 0
+                        implicitWidth: reveal ? notificationUnreadCount.implicitWidth : 0
+                        Behavior on Layout.rightMargin {
+                            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                        }
+                        NotificationUnreadCount {
+                            id: notificationUnreadCount
+                        }
                     }
                     MaterialSymbol {
-                        text: "volume_off"
-                        iconSize: Appearance.font.pixelSize.larger
+                        text: Network.materialSymbol
+                        iconSize: 16
                         color: rightSidebarButton.colText
-                    }
-                }
-                Revealer {
-                    reveal: Audio.source?.audio?.muted ?? false
-                    Layout.fillHeight: true
-                    Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
-                    Behavior on Layout.rightMargin {
-                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                     }
                     MaterialSymbol {
-                        text: "mic_off"
-                        iconSize: Appearance.font.pixelSize.larger
+                        Layout.leftMargin: indicatorsRowLayout.realSpacing
+                        // Android shows a bluetooth icon only while the adapter is on; a slashed glyph reads as broken
+                        visible: BluetoothStatus.available && BluetoothStatus.enabled
+                        text: BluetoothStatus.connected ? "bluetooth_connected" : "bluetooth"
+                        iconSize: 16
                         color: rightSidebarButton.colText
                     }
-                }
-                Revealer {
-                    reveal: Notifications.silent || Notifications.unread > 0
-                    Layout.fillHeight: true
-                    Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
-                    implicitHeight: reveal ? notificationUnreadCount.implicitHeight : 0
-                    implicitWidth: reveal ? notificationUnreadCount.implicitWidth : 0
-                    Behavior on Layout.rightMargin {
-                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                    }
-                    NotificationUnreadCount {
-                        id: notificationUnreadCount
-                    }
-                }
-                MaterialSymbol {
-                    text: Network.materialSymbol
-                    iconSize: Appearance.font.pixelSize.larger
-                    color: rightSidebarButton.colText
-                }
-                MaterialSymbol {
-                    Layout.leftMargin: indicatorsRowLayout.realSpacing
-                    // Android shows a bluetooth icon only while the adapter is on; a slashed glyph reads as broken
-                    visible: BluetoothStatus.available && BluetoothStatus.enabled
-                    text: BluetoothStatus.connected ? "bluetooth_connected" : "bluetooth"
-                    iconSize: Appearance.font.pixelSize.larger
-                    color: rightSidebarButton.colText
                 }
             }
         }
 
-        // RightToLeft row: children later in the file sit further left, so the tray goes
-        // after the indicator button to appear left of the wifi/bluetooth icons.
-        SysTray {
-            Layout.fillWidth: false
-            Layout.fillHeight: true
+        BarGroup { // Tray
+            Layout.alignment: Qt.AlignVCenter
+            visible: tray.implicitWidth > 0
+
+            SysTray {
+                id: tray
+                Layout.fillHeight: true
+                Layout.leftMargin: 4
+                Layout.rightMargin: 4
+            }
         }
 
         Item {
