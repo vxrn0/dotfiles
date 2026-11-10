@@ -14,8 +14,9 @@ Item {
     BarItem {
         id: item
         anchors.centerIn: parent
+        // Digits have no descenders, so the line box centres them 2px above the pill's optical centre
+        anchors.verticalCenterOffset: 2
         label: root.showDate ? DateTime.time + "  " + DateTime.longDate : DateTime.time
-        valueWidth: 48
     }
 
     MouseArea {
