@@ -57,6 +57,15 @@ Item { // Bar content region
             }
         }
 
+        BarGroup { // Pixel-style media capsule: art, title, artist, transport
+            Layout.alignment: Qt.AlignVCenter
+            visible: root.hasMedia
+
+            Media {
+                Layout.alignment: Qt.AlignVCenter
+            }
+        }
+
         BarGroup { // Running agent CLIs, one pill, absent when none run
             Layout.alignment: Qt.AlignVCenter
             visible: harnessIcons.anyRunning
@@ -186,18 +195,13 @@ Item { // Bar content region
             }
         }
 
-        BarGroup { // System: metrics, media, battery
+        BarGroup { // System: metrics and battery
             Layout.alignment: Qt.AlignVCenter
             visible: root.useShortenedForm < 2
             itemSpacing: 0
 
             Resources {
                 Layout.alignment: Qt.AlignVCenter
-            }
-
-            Media {
-                Layout.alignment: Qt.AlignVCenter
-                visible: root.hasMedia
             }
 
             BatteryIndicator {
