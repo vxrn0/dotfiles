@@ -24,7 +24,7 @@ MouseArea {
         Resource {
             iconName: "swap_horiz"
             percentage: ResourceUsage.swapUsedPercentage
-            shown: Config.options.bar.resources.alwaysShowSwap && Math.round(percentage * 100) > 0
+            shown: Config.options.bar.resources.alwaysShowSwap && Math.round(percentage * 100) >= 10
             warningThreshold: Config.options.bar.resources.swapWarningThreshold
         }
 

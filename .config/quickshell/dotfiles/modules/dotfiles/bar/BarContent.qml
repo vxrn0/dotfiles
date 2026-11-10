@@ -50,17 +50,20 @@ Item { // Bar content region
         BarGroup {
             Layout.alignment: Qt.AlignVCenter
             Layout.leftMargin: 10
-            itemSpacing: 4
 
             ClockWidget {
                 showDate: false
                 Layout.alignment: Qt.AlignVCenter
             }
+        }
+
+        BarGroup { // Running agent CLIs, one pill, absent when none run
+            Layout.alignment: Qt.AlignVCenter
+            visible: harnessIcons.anyRunning
 
             HarnessIcons {
                 id: harnessIcons
                 Layout.alignment: Qt.AlignVCenter
-                visible: anyRunning
             }
         }
 
@@ -131,29 +134,16 @@ Item { // Bar content region
                 RowLayout {
                     id: indicatorsRowLayout
                     anchors.centerIn: parent
-                    property real realSpacing: 10
-                    spacing: 0
+                    spacing: 10
 
-                    Revealer {
-                        reveal: Audio.sink?.audio?.muted ?? false
-                        Layout.fillHeight: true
-                        Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
-                        Behavior on Layout.rightMargin {
-                            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                        }
-                        MaterialSymbol {
-                            text: "volume_off"
-                            iconSize: 20
-                            color: rightSidebarButton.colText
-                        }
+                    MaterialSymbol {
+                        text: (Audio.sink?.audio?.muted ?? false) ? "volume_off" : "volume_up"
+                        iconSize: 20
+                        color: rightSidebarButton.colText
                     }
                     Revealer {
                         reveal: Audio.source?.audio?.muted ?? false
                         Layout.fillHeight: true
-                        Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
-                        Behavior on Layout.rightMargin {
-                            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                        }
                         MaterialSymbol {
                             text: "mic_off"
                             iconSize: 20
@@ -163,12 +153,8 @@ Item { // Bar content region
                     Revealer {
                         reveal: Notifications.silent || Notifications.unread > 0
                         Layout.fillHeight: true
-                        Layout.rightMargin: reveal ? indicatorsRowLayout.realSpacing : 0
                         implicitHeight: reveal ? notificationUnreadCount.implicitHeight : 0
                         implicitWidth: reveal ? notificationUnreadCount.implicitWidth : 0
-                        Behavior on Layout.rightMargin {
-                            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                        }
                         NotificationUnreadCount {
                             id: notificationUnreadCount
                             iconColor: rightSidebarButton.colText
@@ -180,7 +166,6 @@ Item { // Bar content region
                         color: rightSidebarButton.colText
                     }
                     MaterialSymbol {
-                        Layout.leftMargin: indicatorsRowLayout.realSpacing
                         // Android shows a bluetooth icon only while the adapter is on; a slashed glyph reads as broken
                         visible: BluetoothStatus.available && BluetoothStatus.enabled
                         text: BluetoothStatus.connected ? "bluetooth_connected" : "bluetooth"

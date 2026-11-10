@@ -19,9 +19,9 @@ ButtonMouseArea {
         monitor: root.monitor
     }
 
-    readonly property real widgetPadding: 6
-    readonly property real dotSize: 12
-    readonly property real activeWidth: 30
+    readonly property real widgetPadding: 12
+    readonly property real dotSize: 14
+    readonly property real activeWidth: 32
     readonly property int workspaceIndexInGroup: Math.max(0, (monitor?.activeWorkspace?.id - 1) % Math.max(1, wsModel.shownCount))
 
     Layout.alignment: Qt.AlignVCenter
@@ -69,13 +69,13 @@ ButtonMouseArea {
             Hyprland.dispatch(`hl.dsp.focus({workspace = "r-1"})`);
     }
 
-    Rectangle { // Track
+    Rectangle { // Track, same height and fill as the bar pills
         id: track
         anchors.centerIn: parent
         implicitWidth: indicatorRow.implicitWidth + root.widgetPadding * 2
-        implicitHeight: root.dotSize + 12
+        implicitHeight: Appearance.sizes.baseBarHeight - 10
         radius: height / 2
-        color: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.4)
+        color: Appearance.colors.colLayer1
 
         Row {
             id: indicatorRow

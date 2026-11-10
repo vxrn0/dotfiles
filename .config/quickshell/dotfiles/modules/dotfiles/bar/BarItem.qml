@@ -51,6 +51,7 @@ Item {
         id: content
         anchors.centerIn: parent
         spacing: 6
+        visible: root.shown
 
         MaterialSymbol {
             visible: root.iconSource.length === 0 && root.glyph.length > 0
