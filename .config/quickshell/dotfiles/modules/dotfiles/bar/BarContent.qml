@@ -37,7 +37,7 @@ Item { // Bar content region
         border.color: Appearance.colors.colLayer0Border
     }
 
-    RowLayout { // Left: clock and running agents, one pill
+    RowLayout { // Left: clock and running agents, separate pills
         id: leftSectionRowLayout
         anchors {
             top: parent.top
@@ -45,7 +45,7 @@ Item { // Bar content region
             left: parent.left
             right: middleSection.left
         }
-        spacing: 0
+        spacing: 4
 
         BarGroup {
             Layout.alignment: Qt.AlignVCenter

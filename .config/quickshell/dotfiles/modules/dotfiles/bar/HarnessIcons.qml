@@ -70,8 +70,8 @@ RowLayout {
 
             CustomIcon {
                 anchors.centerIn: parent
-                width: 18
-                height: 18
+                width: 20
+                height: 20
                 source: iconItem.modelData.source
                 colorize: true
                 color: Appearance.colors.colOnLayer1

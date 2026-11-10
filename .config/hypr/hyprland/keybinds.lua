@@ -12,8 +12,8 @@ local qsIpcCall = "qs -c $qsConfig ipc call"
 -- hyprshot screenshotted the region selector the shell had just opened. Checking the
 -- selector's own layer is the ground truth; the short wait covers the mapping delay.
 local qsIsAlive = "pgrep -x qs >/dev/null"
--- Waits for the shell to open its own selector instead of guessing with a fixed delay;
--- see the script for why a plain `pgrep -x qs` check was not enough.
+-- The shell owns region binds while it runs; the script only lets the fallback through when
+-- no shell is alive. See the script for why waiting for the selector did not work.
 local qsRegionGuard = hyprScripts .. "/region_guard.sh || "
 
 hl.bind("SUPER_L", hl.dsp.global("quickshell:workspaceNumber"), { ignore_mods = true, transparent = true })
