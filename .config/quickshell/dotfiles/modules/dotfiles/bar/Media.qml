@@ -4,7 +4,7 @@ import qs.services
 import QtQuick
 import QtQuick.Layouts
 
-// Pixel-style media capsule: album art, track title, artist, play/pause. It only exists
+// Pixel-style media capsule: album art, title over artist, play/pause. It only exists
 // while a player is present; the whole capsule is the transport control.
 Item {
     id: root
@@ -18,13 +18,13 @@ Item {
     RowLayout {
         id: rowLayout
         anchors.centerIn: parent
-        spacing: 8
+        spacing: 9
 
         Rectangle { // Album art, or a note glyph when the player sends none
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: 26
-            implicitHeight: 26
-            radius: 8
+            implicitWidth: 30
+            implicitHeight: 30
+            radius: 9
             color: Appearance.colors.colLayer2
             clip: true
 
@@ -41,40 +41,46 @@ Item {
                 anchors.centerIn: parent
                 visible: art.status !== Image.Ready
                 text: "music_note"
-                iconSize: 16
+                iconSize: 18
                 color: Appearance.colors.colOnLayer2
             }
         }
 
-        StyledText {
+        ColumnLayout { // Title over artist, like Android's now-playing row
             Layout.alignment: Qt.AlignVCenter
-            Layout.preferredWidth: Math.min(implicitWidth, 150)
-            Layout.maximumWidth: 150
-            elide: Text.ElideRight
-            text: root.track?.title ?? ""
-            color: Appearance.colors.colOnLayer0
-            font {
-                pixelSize: Appearance.font.pixelSize.normal
-                weight: Font.DemiBold
-                variableAxes: ({ "wght": 650 })
-            }
-        }
+            Layout.maximumWidth: 210
+            spacing: -2
 
-        StyledText {
-            Layout.alignment: Qt.AlignVCenter
-            visible: text.length > 0
-            Layout.preferredWidth: Math.min(implicitWidth, 110)
-            Layout.maximumWidth: 110
-            elide: Text.ElideRight
-            text: root.track?.artist ?? ""
-            color: Appearance.colors.colOnLayer2
-            font.pixelSize: Appearance.font.pixelSize.small
+            StyledText {
+                Layout.fillWidth: true
+                Layout.preferredWidth: Math.min(implicitWidth, 210)
+                Layout.maximumWidth: 210
+                elide: Text.ElideRight
+                text: root.track?.title ?? ""
+                color: Appearance.colors.colOnLayer0
+                font {
+                    pixelSize: Appearance.font.pixelSize.small
+                    weight: Font.DemiBold
+                    variableAxes: ({ "wght": 650 })
+                }
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                Layout.preferredWidth: Math.min(implicitWidth, 210)
+                Layout.maximumWidth: 210
+                elide: Text.ElideRight
+                text: root.track?.artist ?? ""
+                color: Appearance.colors.colOnLayer2
+                font.pixelSize: Appearance.font.pixelSize.smaller
+            }
         }
 
         MaterialSymbol {
             Layout.alignment: Qt.AlignVCenter
             text: root.player?.isPlaying ? "pause" : "play_arrow"
-            iconSize: 20
+            iconSize: 22
+            fill: root.player?.isPlaying ? 1 : 0
             color: root.player?.isPlaying ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
         }
     }
