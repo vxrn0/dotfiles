@@ -6,7 +6,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 
-// Which agent CLIs are running, as 20px glyphs in the shared item scale. The whole
+// Which agent CLIs are running, as brand marks in the shared item scale. The whole
 // cluster disappears when nothing is running.
 RowLayout {
     id: root
@@ -47,9 +47,9 @@ RowLayout {
 
     Repeater {
         model: [
-            { running: root.codexRunning, glyph: "terminal" },
-            { running: root.claudeRunning, glyph: "auto_awesome" },
-            { running: root.opencodeRunning, glyph: "code" }
+            { running: root.codexRunning, source: "codex-symbolic.svg" },
+            { running: root.claudeRunning, source: "claude-symbolic.svg" },
+            { running: root.opencodeRunning, source: "opencode-symbolic.svg" }
         ]
 
         delegate: Item {
@@ -67,12 +67,12 @@ RowLayout {
                 animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
             }
 
-            // Brand marks are too dense to read at 20px; the bar's own glyph set stays legible
-            MaterialSymbol {
+            CustomIcon {
                 anchors.centerIn: parent
-                text: iconItem.modelData.glyph
-                iconSize: 20
-                fill: 0
+                width: 18
+                height: 18
+                source: iconItem.modelData.source
+                colorize: true
                 color: Appearance.colors.colOnLayer1
             }
         }
