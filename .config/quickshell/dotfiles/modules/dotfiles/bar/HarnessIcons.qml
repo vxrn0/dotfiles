@@ -7,7 +7,8 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 
 // Which agent CLIs are running, as brand marks in the shared item scale. The whole
-// cluster disappears when nothing is running.
+// cluster disappears when nothing is running. Only CLI harnesses belong here: GUI
+// harnesses (desktop apps) show up in the system tray instead.
 RowLayout {
     id: root
     spacing: 6
