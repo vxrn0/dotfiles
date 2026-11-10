@@ -27,7 +27,7 @@ PanelWindow {
     Image {
         anchors.fill: parent
         visible: !root.isVideo && root.path.length > 0
-        source: root.path.length > 0 ? `file://${root.path}` : ""
+        source: (!root.isVideo && root.path.length > 0) ? `file://${root.path}` : ""
         sourceSize.width: root.width
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
