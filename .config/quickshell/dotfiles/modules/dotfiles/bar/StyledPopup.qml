@@ -34,9 +34,11 @@ LazyLoader {
         exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
         margins {
+            // Centre the whole surface, not just its inner background: the elevation
+            // margin is part of the window, and ignoring it shifted popups right.
             left: root.QsWindow?.mapFromItem(
                 root.hoverTarget,
-                (root.hoverTarget.width - popupBackground.implicitWidth) / 2, 0
+                (root.hoverTarget.width - popupWindow.implicitWidth) / 2, 0
             ).x
             top: Appearance.sizes.barHeight
         }

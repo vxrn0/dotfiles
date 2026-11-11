@@ -11,9 +11,13 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 
 // Media panel, opened from the bar's media capsule. One card per MPRIS player.
+// Full-screen while open: the empty area closes the panel on click, and Esc works
+// because the surface owns the keyboard.
 Scope {
     id: root
     readonly property real widgetWidth: 360
+    readonly property real screenWidth: (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
+        ?? Quickshell.screens[0])?.width ?? 0
     // ScriptModel wants a JS array; the service exposes a QML list
     readonly property var playerArray: {
         const result = [];
@@ -21,8 +25,6 @@ Scope {
             result.push(MprisController.players[i]);
         return result;
     }
-    readonly property real screenWidth: (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
-        ?? Quickshell.screens[0])?.width ?? 0
 
     Connections {
         target: MprisController
@@ -39,21 +41,27 @@ Scope {
             ?? Quickshell.screens[0] ?? null
         WlrLayershell.namespace: "quickshell:mediaControls"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
         color: "transparent"
-        implicitWidth: root.widgetWidth
-        implicitHeight: columnLayout.implicitHeight
 
         anchors {
             top: true
+            bottom: true
             left: true
+            right: true
         }
-        margins {
-            top: Appearance.sizes.barHeight
-            // Right edge under the media capsule's right edge, clamped to the screen.
-            left: {
+
+        // Click anywhere outside the card closes the panel.
+        MouseArea {
+            anchors.fill: parent
+            onClicked: GlobalStates.mediaControlsOpen = false
+        }
+
+        Item {
+            id: cardColumn
+            x: {
                 const anchorX = GlobalStates.mediaControlsAnchorX >= 0
                     ? GlobalStates.mediaControlsAnchorX
                     : (root.screenWidth + root.widgetWidth) / 2;
@@ -62,39 +70,14 @@ Scope {
                     anchorX - root.widgetWidth
                 ));
             }
-        }
-        mask: Region {
-            item: columnLayout
-        }
+            y: Appearance.sizes.barHeight
+            width: root.widgetWidth
+            height: columnLayout.implicitHeight
 
-        property bool dismissArmed: false
-
-        onVisibleChanged: {
-            if (visible) {
-                dismissArmed = false;
-                armTimer.restart();
+            // Swallow clicks on the card so only the empty area dismisses.
+            MouseArea {
+                anchors.fill: parent
             }
-        }
-
-        // GlobalFocusGrab clears itself when the panel loses keyboard focus, which
-        // happens on every track change. Watch the focused window instead.
-        Timer {
-            id: armTimer
-            interval: 400
-            onTriggered: panelWindow.dismissArmed = true
-        }
-        Connections {
-            target: Hyprland
-            function onActiveToplevelChanged() {
-                if (panelWindow.dismissArmed && GlobalStates.mediaControlsOpen)
-                    GlobalStates.mediaControlsOpen = false;
-            }
-        }
-
-        FocusScope {
-            id: focusScope
-            anchors.fill: parent
-            focus: GlobalStates.mediaControlsOpen
 
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Escape) {
@@ -110,7 +93,7 @@ Scope {
 
                 Repeater {
                     // ScriptModel keeps the delegates alive across track changes; a plain
-                    // list rebuild would drop keyboard focus and clear the focus grab.
+                    // list rebuild would drop the delegates and their running animations.
                     model: ScriptModel {
                         values: root.playerArray
                     }
@@ -122,6 +105,11 @@ Scope {
                     }
                 }
             }
+        }
+
+        onVisibleChanged: {
+            if (visible)
+                cardColumn.forceActiveFocus();
         }
     }
 
