@@ -7,7 +7,7 @@
 Hyprland + Quickshell on Arch. A MangoWM port is parked in `extras/mango/`, not installed.
 
 ```sh
-git clone https://github.com/xvxrn/dotfiles ~/dotfiles && ~/dotfiles/extras/install.sh
+git clone https://github.com/vxrn0/dotfiles ~/dotfiles && ~/dotfiles/extras/install.sh
 ```
 
 `extras/install.sh` has a preflight (`--check`), a plan mode (`--dry-run`) and `extras/verify.sh`
