@@ -88,7 +88,13 @@ Scope {
 
             ColumnLayout {
                 id: columnLayout
-                anchors.fill: parent
+                // Anchor only three sides: filling the parent would make the parent's
+                // height depend on this layout, and the card collapses to nothing.
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                }
                 spacing: 10
 
                 Repeater {
