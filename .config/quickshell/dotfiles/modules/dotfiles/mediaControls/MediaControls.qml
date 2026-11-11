@@ -13,7 +13,7 @@ import Quickshell.Services.Mpris
 // Media panel, opened from the bar's media capsule. One card per MPRIS player.
 Scope {
     id: root
-    readonly property real widgetWidth: 440
+    readonly property real widgetWidth: 360
     // ScriptModel wants a JS array; the service exposes a QML list
     readonly property var playerArray: {
         const result = [];
@@ -52,14 +52,14 @@ Scope {
         }
         margins {
             top: Appearance.sizes.barHeight
-            // Left edge under the media capsule, clamped to the screen edges.
+            // Right edge under the media capsule's right edge, clamped to the screen.
             left: {
                 const anchorX = GlobalStates.mediaControlsAnchorX >= 0
                     ? GlobalStates.mediaControlsAnchorX
-                    : (root.screenWidth - root.widgetWidth) / 2;
+                    : (root.screenWidth + root.widgetWidth) / 2;
                 return Math.max(Appearance.sizes.hyprlandGapsOut, Math.min(
                     root.screenWidth - root.widgetWidth - Appearance.sizes.hyprlandGapsOut,
-                    anchorX
+                    anchorX - root.widgetWidth
                 ));
             }
         }
@@ -67,17 +67,27 @@ Scope {
             item: columnLayout
         }
 
+        property bool dismissArmed: false
+
         onVisibleChanged: {
             if (visible) {
-                GlobalFocusGrab.addDismissable(panelWindow);
-            } else {
-                GlobalFocusGrab.removeDismissable(panelWindow);
+                dismissArmed = false;
+                armTimer.restart();
             }
         }
+
+        // GlobalFocusGrab clears itself when the panel loses keyboard focus, which
+        // happens on every track change. Watch the focused window instead.
+        Timer {
+            id: armTimer
+            interval: 400
+            onTriggered: panelWindow.dismissArmed = true
+        }
         Connections {
-            target: GlobalFocusGrab
-            function onDismissed() {
-                GlobalStates.mediaControlsOpen = false;
+            target: Hyprland
+            function onActiveToplevelChanged() {
+                if (panelWindow.dismissArmed && GlobalStates.mediaControlsOpen)
+                    GlobalStates.mediaControlsOpen = false;
             }
         }
 

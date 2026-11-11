@@ -20,7 +20,7 @@ Singleton {
     property bool overviewOpen: false
     property bool regionSelectorOpen: false
     property bool mediaControlsOpen: false
-    property real mediaControlsAnchorX: -1 // bar media capsule left edge, in screen coordinates
+    property real mediaControlsAnchorX: -1 // bar media capsule right edge, in screen coordinates
     property bool searchOpen: false
     property bool screenLocked: false
     property bool screenLockContainsCharacters: false

@@ -88,7 +88,7 @@ Item {
             else if (event.button === Qt.MiddleButton)
                 root.player?.togglePlaying();
             else {
-                GlobalStates.mediaControlsAnchorX = root.mapToItem(null, 0, 0).x;
+                GlobalStates.mediaControlsAnchorX = root.mapToItem(null, root.width, 0).x;
                 GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
             }
         }
