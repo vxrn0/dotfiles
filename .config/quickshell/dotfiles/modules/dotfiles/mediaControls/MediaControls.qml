@@ -39,7 +39,7 @@ Scope {
             ?? Quickshell.screens[0] ?? null
         WlrLayershell.namespace: "quickshell:mediaControls"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
         color: "transparent"
@@ -67,35 +67,24 @@ Scope {
             item: columnLayout
         }
 
-        property bool dismissArmed: false
-
         onVisibleChanged: {
             if (visible) {
-                dismissArmed = false;
-                armTimer.restart();
-                focusScope.forceActiveFocus();
+                GlobalFocusGrab.addDismissable(panelWindow);
+            } else {
+                GlobalFocusGrab.removeDismissable(panelWindow);
             }
         }
-
-        // GlobalFocusGrab clears itself whenever the panel's focus flickers, which
-        // happens on every track change. Watch the focused window instead.
-        Timer {
-            id: armTimer
-            interval: 400
-            onTriggered: panelWindow.dismissArmed = true
-        }
         Connections {
-            target: Hyprland
-            function onActiveToplevelChanged() {
-                if (panelWindow.dismissArmed && GlobalStates.mediaControlsOpen)
-                    GlobalStates.mediaControlsOpen = false;
+            target: GlobalFocusGrab
+            function onDismissed() {
+                GlobalStates.mediaControlsOpen = false;
             }
         }
 
         FocusScope {
             id: focusScope
             anchors.fill: parent
-            focus: true
+            focus: GlobalStates.mediaControlsOpen
 
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Escape) {
