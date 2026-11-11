@@ -1,15 +1,18 @@
 import qs.modules.common
+import qs.modules.common.widgets
 import QtQuick
 
 // Seek bar for the media panel. Deliberately not StyledSlider: its SmoothedAnimation
-// behaviour freezes when the value is updated every frame by a running track.
+// behaviour freezes when the value is updated every frame by a running track. The wavy
+// fill is the same WavyLine StyledSlider draws, so the look is unchanged.
 Item {
     id: root
     property real value: 0 // 0..1
     property bool interactive: true
+    property bool playing: false // animate the wave only while audio runs
     property color fillColor: Appearance.colors.colPrimary
     property color trackColor: Appearance.colors.colSecondaryContainer
-    property real trackHeight: 5
+    property real trackHeight: 4
     signal moved(real value)
 
     implicitHeight: 24
@@ -26,13 +29,29 @@ Item {
         color: root.trackColor
     }
 
-    Rectangle { // Fill
+    WavyLine { // Fill
+        id: waveFill
         anchors.verticalCenter: parent.verticalCenter
         x: root.margin
         width: root.position * root.usableWidth
         height: root.trackHeight
-        radius: height / 2
+        lineWidth: root.trackHeight
+        fullLength: root.usableWidth
+        amplitudeMultiplier: 0.5
+        frequency: 6
         color: root.fillColor
+        visible: root.position > 0
+
+        Connections {
+            target: root
+            function onPositionChanged() { waveFill.requestPaint(); }
+            function onFillColorChanged() { waveFill.requestPaint(); }
+        }
+
+        FrameAnimation {
+            running: root.playing
+            onTriggered: waveFill.requestPaint()
+        }
     }
 
     Rectangle { // Handle

@@ -214,6 +214,7 @@ Item {
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignVCenter
                             interactive: root.player?.canSeek ?? false
+                            playing: root.playing
                             value: root.length > 0 ? root.displayPosition / root.length : 0
                             onMoved: (value) => root.seek(value * root.length)
                         }
