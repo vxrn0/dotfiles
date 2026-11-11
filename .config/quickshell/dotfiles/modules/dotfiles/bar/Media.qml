@@ -2,6 +2,7 @@ import qs
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
+import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Layouts
 
@@ -20,23 +21,29 @@ Item {
     RowLayout {
         id: rowLayout
         anchors.centerIn: parent
-        spacing: 9
+        spacing: 10
 
         Rectangle { // Album art, or a note glyph when the player sends none
+            id: artFrame
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: 30
             implicitHeight: 30
             radius: 9
             color: Appearance.colors.colLayer2
-            clip: true
 
-            Image {
+            StyledImage {
                 id: art
                 anchors.fill: parent
-                asynchronous: true
                 fillMode: Image.PreserveAspectCrop
                 source: root.artUrl.startsWith("/") ? "file://" + root.artUrl : root.artUrl
-                visible: status === Image.Ready
+                layer.enabled: true
+                layer.effect: OpacityMask {
+                    maskSource: Rectangle {
+                        width: artFrame.width
+                        height: artFrame.height
+                        radius: artFrame.radius
+                    }
+                }
             }
 
             MaterialSymbol {
@@ -50,13 +57,13 @@ Item {
 
         StyledText {
             Layout.alignment: Qt.AlignVCenter
-            Layout.preferredWidth: Math.min(implicitWidth, 210)
-            Layout.maximumWidth: 210
+            Layout.preferredWidth: Math.min(implicitWidth, 300)
+            Layout.maximumWidth: 300
             elide: Text.ElideRight
             text: root.track?.title ?? ""
             color: Appearance.colors.colOnLayer0
             font {
-                pixelSize: Appearance.font.pixelSize.small
+                pixelSize: Appearance.font.pixelSize.normal
                 weight: Font.DemiBold
                 variableAxes: ({ "wght": 650 })
             }
@@ -80,8 +87,10 @@ Item {
                 root.player?.next();
             else if (event.button === Qt.MiddleButton)
                 root.player?.togglePlaying();
-            else
+            else {
+                GlobalStates.mediaControlsAnchorX = root.mapToItem(null, 0, 0).x;
                 GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
+            }
         }
     }
 }
