@@ -1,11 +1,13 @@
+import qs
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
 import QtQuick
 import QtQuick.Layouts
 
-// Pixel-style media capsule: album art, title over artist, play/pause. It only exists
-// while a player is present; the whole capsule is the transport control.
+// Pixel-style media capsule: album art, track title, play/pause. It only exists
+// while a player is present. Left click opens the media panel, the other buttons
+// are transport shortcuts.
 Item {
     id: root
     readonly property var player: MprisController.activePlayer
@@ -46,33 +48,17 @@ Item {
             }
         }
 
-        ColumnLayout { // Title over artist, like Android's now-playing row
+        StyledText {
             Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: Math.min(implicitWidth, 210)
             Layout.maximumWidth: 210
-            spacing: -2
-
-            StyledText {
-                Layout.fillWidth: true
-                Layout.preferredWidth: Math.min(implicitWidth, 210)
-                Layout.maximumWidth: 210
-                elide: Text.ElideRight
-                text: root.track?.title ?? ""
-                color: Appearance.colors.colOnLayer0
-                font {
-                    pixelSize: Appearance.font.pixelSize.small
-                    weight: Font.DemiBold
-                    variableAxes: ({ "wght": 650 })
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                Layout.preferredWidth: Math.min(implicitWidth, 210)
-                Layout.maximumWidth: 210
-                elide: Text.ElideRight
-                text: root.track?.artist ?? ""
-                color: Appearance.colors.colOnLayer2
-                font.pixelSize: Appearance.font.pixelSize.smaller
+            elide: Text.ElideRight
+            text: root.track?.title ?? ""
+            color: Appearance.colors.colOnLayer0
+            font {
+                pixelSize: Appearance.font.pixelSize.small
+                weight: Font.DemiBold
+                variableAxes: ({ "wght": 650 })
             }
         }
 
@@ -93,9 +79,9 @@ Item {
             if (event.button === Qt.RightButton)
                 root.player?.next();
             else if (event.button === Qt.MiddleButton)
-                root.player?.previous();
-            else
                 root.player?.togglePlaying();
+            else
+                GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
         }
     }
 }

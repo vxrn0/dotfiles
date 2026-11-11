@@ -7,6 +7,7 @@ import qs.modules.dotfiles.background
 import qs.modules.dotfiles.bar
 import qs.modules.dotfiles.cheatsheet
 import qs.modules.dotfiles.lock
+import qs.modules.dotfiles.mediaControls
 import qs.modules.dotfiles.notificationPopup
 import qs.modules.dotfiles.onScreenDisplay
 import qs.modules.dotfiles.overview
@@ -23,6 +24,7 @@ Scope {
     PanelLoader { component: Bar {} }
     PanelLoader { component: Cheatsheet {} }
     PanelLoader { component: Lock {} }
+    PanelLoader { component: MediaControls {} }
     PanelLoader { component: NotificationPopup {} }
     PanelLoader { component: OnScreenDisplay {} }
     PanelLoader { component: Overlay {} }
