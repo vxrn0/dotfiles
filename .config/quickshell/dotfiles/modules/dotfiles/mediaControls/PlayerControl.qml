@@ -124,7 +124,7 @@ Item {
                 StyledImage {
                     id: art
                     anchors.fill: parent
-                    cache: false
+                    cache: true
                     fillMode: Image.PreserveAspectCrop
                     source: root.artUrl.startsWith("/") ? "file://" + root.artUrl : root.artUrl
                     layer.enabled: true
@@ -209,14 +209,20 @@ Item {
                             }
                         }
 
-                        SeekBar {
-                            id: seekBar
+                        StyledSlider {
+                            id: seekSlider
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignVCenter
-                            interactive: root.player?.canSeek ?? false
-                            playing: root.playing
+                            configuration: StyledSlider.Configuration.Wavy
+                            enabled: root.player?.canSeek ?? false
+                            // The stock SmoothedAnimation stalls when the value moves every
+                            // frame; the position is already animated, so jump directly.
+                            Behavior on value { enabled: false }
                             value: root.length > 0 ? root.displayPosition / root.length : 0
-                            onMoved: (value) => root.seek(value * root.length)
+                            onMoved: {
+                                if (root.length > 0)
+                                    root.seek(value * root.length);
+                            }
                         }
 
                         RippleButton {
