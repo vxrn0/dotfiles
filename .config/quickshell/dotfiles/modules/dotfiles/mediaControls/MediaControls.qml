@@ -11,8 +11,8 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 
 // Media panel, opened from the bar's media capsule. One card per MPRIS player.
-// Full-screen while open: the empty area closes the panel on click, and Esc works
-// because the surface owns the keyboard.
+// Sized to its content like the right sidebar, so the stock Hyprland layer
+// animation scales the card, not the whole screen.
 Scope {
     id: root
     readonly property real widgetWidth: 360
@@ -41,28 +41,21 @@ Scope {
             ?? Quickshell.screens[0] ?? null
         WlrLayershell.namespace: "quickshell:mediaControls"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: GlobalStates.mediaControlsOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
         color: "transparent"
+        implicitWidth: root.widgetWidth
+        implicitHeight: columnLayout.implicitHeight
 
         anchors {
             top: true
-            bottom: true
             left: true
-            right: true
         }
-
-        // Click anywhere outside the card closes the panel.
-        MouseArea {
-            anchors.fill: parent
-            onClicked: GlobalStates.mediaControlsOpen = false
-        }
-
-        Item {
-            id: cardColumn
-            property bool revealed: false
-            x: {
+        margins {
+            top: Appearance.sizes.barHeight
+            // Right edge under the media capsule's right edge, clamped to the screen.
+            left: {
                 const anchorX = GlobalStates.mediaControlsAnchorX >= 0
                     ? GlobalStates.mediaControlsAnchorX
                     : (root.screenWidth + root.widgetWidth) / 2;
@@ -71,29 +64,37 @@ Scope {
                     anchorX - root.widgetWidth
                 ));
             }
-            // Slides down from under the bar; the layer itself only fades.
-            y: Appearance.sizes.barHeight + (revealed ? 0 : -8)
-            opacity: revealed ? 1 : 0
-            width: root.widgetWidth
+        }
+
+        mask: Region {
+            item: columnLayout
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                GlobalFocusGrab.addDismissable(panelWindow);
+            } else {
+                GlobalFocusGrab.removeDismissable(panelWindow);
+            }
+        }
+        Connections {
+            target: GlobalFocusGrab
+            function onDismissed() {
+                GlobalStates.mediaControlsOpen = false;
+            }
+        }
+
+        FocusScope {
+            id: focusScope
+            // Not fill: the window height follows the content, and filling would make
+            // the height depend on the layout that lives inside it.
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+            }
             height: columnLayout.implicitHeight
-
-            Behavior on y {
-                NumberAnimation {
-                    duration: 220
-                    easing.type: Easing.OutCubic
-                }
-            }
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 160
-                    easing.type: Easing.OutCubic
-                }
-            }
-
-            // Swallow clicks on the card so only the empty area dismisses.
-            MouseArea {
-                anchors.fill: parent
-            }
+            focus: GlobalStates.mediaControlsOpen
 
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Escape) {
@@ -104,12 +105,10 @@ Scope {
 
             ColumnLayout {
                 id: columnLayout
-                // Anchor only three sides: filling the parent would make the parent's
-                // height depend on this layout, and the card collapses to nothing.
                 anchors {
+                    top: parent.top
                     left: parent.left
                     right: parent.right
-                    top: parent.top
                 }
                 spacing: 10
 
@@ -126,16 +125,6 @@ Scope {
                         Layout.fillWidth: true
                     }
                 }
-            }
-        }
-
-        onVisibleChanged: {
-            if (visible) {
-                cardColumn.revealed = false;
-                Qt.callLater(() => cardColumn.revealed = true);
-                cardColumn.forceActiveFocus();
-            } else {
-                cardColumn.revealed = false;
             }
         }
     }
