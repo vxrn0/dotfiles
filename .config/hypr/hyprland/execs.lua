@@ -16,6 +16,7 @@ hl.on("hyprland.start", function ()
 
     -- Audio
     hl.exec_cmd("easyeffects --hide-window --service-mode")
+    hl.exec_cmd("command -v handy >/dev/null && handy --start-hidden")
 
     -- Clipboard: history
     --hl.exec_cmd("wl-paste --watch cliphist store")

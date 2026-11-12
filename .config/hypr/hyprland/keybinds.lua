@@ -367,6 +367,7 @@ hl.bind("SUPER + X", hl.dsp.exec_cmd(codeEditor), { description = "App: Code edi
 hl.bind("CTRL + SUPER + SHIFT + ALT + W", hl.dsp.exec_cmd(officeSoftware), { description = "App: Office software" })
 hl.bind("CTRL + SUPER + V", hl.dsp.exec_cmd(volumeMixer), { description = "App: Volume mixer" })
 hl.bind("CTRL + SHIFT + Escape", hl.dsp.exec_cmd(taskManager), { description = "App: Task manager" })
+hl.bind("SUPER + ALT + D", hl.dsp.exec_cmd("handy --toggle-transcription"), { description = "App: Dictation" })
 
 --# Cursed stuff
 --## Make window not amogus large

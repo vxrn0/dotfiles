@@ -54,8 +54,10 @@ Every commit has the same author, so put the zone in the subject (`hypr:`, `pilo
   `hyprland/scripts/ensure-dynamic-cursors.sh` loads it at login and rebuilds it first when
   Hyprland was updated, because the ABI check rejects the old build.
 
-- `extras/install-handy.sh` installs Handy (offline speech to text) into `~/.local/opt/handy`.
-  It downloads WebKit and the release into a cache first, so a slow line only pays once.
+- `extras/install-handy.sh` installs Handy (offline speech to text). System libraries come from
+  pacman, the app itself from the release. Toggle it with `SUPER+ALT+D`; the hotkey is a Hyprland
+  bind calling `handy --toggle-transcription`, because Handy's own hotkey uses X11 and misses
+  keys on Wayland.
 
 ## Verify
 
