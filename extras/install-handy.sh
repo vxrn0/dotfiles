@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Installs Handy (offline speech to text). System libraries come from pacman; only the app
-# itself is unpacked from the release, because there is no Arch package worth the build time.
-# The hotkey lives in the Hyprland config (SUPER+ALT+D), not in the app.
+# Installs Handy (offline speech to text). System libraries come from pacman; the app itself
+# is unpacked from the release. Layout matters: Tauri resolves bundled resources relative to
+# the binary as ../lib/Handy, so the binary lives in bin/ and everything else in lib/Handy/.
+# The hotkey is a Hyprland bind (SUPER+ALT+D), not the app's own one, which is X11-only.
 set -euo pipefail
 
 VERSION="0.10.0"
@@ -28,22 +29,23 @@ if [ "$actual" != "$EXPECTED" ]; then
 fi
 
 rm -rf "$PREFIX"
-mkdir -p "$PREFIX/app"
+mkdir -p "$PREFIX/bin" "$PREFIX/lib"
 bsdtar -xf "$DEB" -C "$CACHE" data.tar.gz
 tar xzf "$CACHE/data.tar.gz" -C "$CACHE" usr/lib/Handy usr/bin/handy
-cp -a "$CACHE/usr/lib/Handy/." "$PREFIX/app/"
-cp "$CACHE/usr/bin/handy" "$PREFIX/app/handy"
-chmod +x "$PREFIX/app/handy"
+cp -a "$CACHE/usr/lib/Handy" "$PREFIX/lib/Handy"
+cp "$CACHE/usr/bin/handy" "$PREFIX/bin/handy"
+chmod +x "$PREFIX/bin/handy"
 
 mkdir -p "$HOME/.local/bin"
 cat > "$HOME/.local/bin/handy" <<'EOF'
 #!/usr/bin/env bash
 PREFIX="$HOME/.local/opt/handy"
-export LD_LIBRARY_PATH="$PREFIX/app:${LD_LIBRARY_PATH:-}"
+export LD_LIBRARY_PATH="$PREFIX/lib/Handy:${LD_LIBRARY_PATH:-}"
 export PATH="$HOME/.local/bin:$PATH"
-exec "$PREFIX/app/handy" "$@"
+exec "$PREFIX/bin/handy" "$@"
 EOF
 chmod +x "$HOME/.local/bin/handy"
 
 echo "installed to $PREFIX"
 echo "start it from the Hyprland autostart, toggle with SUPER+ALT+D"
+echo "models go to ~/.cache/huggingface/hub; download them from the app's settings"
