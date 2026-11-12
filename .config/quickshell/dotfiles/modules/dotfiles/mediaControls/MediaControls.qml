@@ -61,6 +61,7 @@ Scope {
 
         Item {
             id: cardColumn
+            property bool revealed: false
             x: {
                 const anchorX = GlobalStates.mediaControlsAnchorX >= 0
                     ? GlobalStates.mediaControlsAnchorX
@@ -70,9 +71,24 @@ Scope {
                     anchorX - root.widgetWidth
                 ));
             }
-            y: Appearance.sizes.barHeight
+            // Slides down from under the bar; the layer itself only fades.
+            y: Appearance.sizes.barHeight + (revealed ? 0 : -8)
+            opacity: revealed ? 1 : 0
             width: root.widgetWidth
             height: columnLayout.implicitHeight
+
+            Behavior on y {
+                NumberAnimation {
+                    duration: 220
+                    easing.type: Easing.OutCubic
+                }
+            }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 160
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             // Swallow clicks on the card so only the empty area dismisses.
             MouseArea {
@@ -114,8 +130,13 @@ Scope {
         }
 
         onVisibleChanged: {
-            if (visible)
+            if (visible) {
+                cardColumn.revealed = false;
+                Qt.callLater(() => cardColumn.revealed = true);
                 cardColumn.forceActiveFocus();
+            } else {
+                cardColumn.revealed = false;
+            }
         }
     }
 
