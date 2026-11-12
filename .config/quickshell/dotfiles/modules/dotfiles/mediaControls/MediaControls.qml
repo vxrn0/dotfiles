@@ -20,18 +20,12 @@ Scope {
     readonly property real shadowMargin: Appearance.sizes.elevationMargin
     readonly property real screenWidth: (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
         ?? Quickshell.screens[0])?.width ?? 0
-    // ScriptModel wants a JS array; the service exposes a QML list
-    readonly property var playerArray: {
-        const result = [];
-        for (let i = 0; i < MprisController.players.length; i++)
-            result.push(MprisController.players[i]);
-        return result;
-    }
 
     Connections {
         target: MprisController
-        function onPlayersChanged() {
-            if (MprisController.players.length === 0)
+        // The players property is a QML list and does not notify; activePlayer does.
+        function onActivePlayerChanged() {
+            if (MprisController.activePlayer === null)
                 GlobalStates.mediaControlsOpen = false;
         }
     }
@@ -44,7 +38,9 @@ Scope {
         screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
             ?? Quickshell.screens[0] ?? null
         WlrLayershell.namespace: "quickshell:mediaControlsDismiss"
-        WlrLayershell.layer: WlrLayer.Overlay
+        // Below the card layer, otherwise every click lands on the catcher and
+        // closes the panel instead of pressing the button under the pointer.
+        WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
@@ -128,11 +124,9 @@ Scope {
                 spacing: 10
 
                 Repeater {
-                    // ScriptModel keeps the delegates alive across track changes; a plain
-                    // list rebuild would drop the delegates and their running animations.
-                    model: ScriptModel {
-                        values: root.playerArray
-                    }
+                    // The MPRIS list only changes when a player appears or disappears;
+                    // track changes keep the same delegate and its running animation.
+                    model: MprisController.players
                     delegate: PlayerControl {
                         required property int index
                         required property MprisPlayer modelData
@@ -156,7 +150,8 @@ Scope {
         }
 
         function open(): void {
-            GlobalStates.mediaControlsOpen = true;
+            if (MprisController.activePlayer !== null)
+                GlobalStates.mediaControlsOpen = true;
         }
     }
 }
