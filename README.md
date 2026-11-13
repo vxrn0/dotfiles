@@ -1,6 +1,6 @@
 # dotfiles
 
-<img src=".github/preview-rounded.webp" alt="Hyprland + Quickshell desktop">
+<img src=".github/desktop.webp" alt="Hyprland + Quickshell desktop">
 
 **Under development. Not tested.**
 
