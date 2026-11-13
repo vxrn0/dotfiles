@@ -340,6 +340,8 @@ PanelWindow {
             root.mouseButton = mouse.button;
         }
         onReleased: (mouse) => {
+            // A release without a press in this picker must not snip, or it closes the picker at once
+            if (!root.dragging) return;
             // Detect if it was a click -> Try to select targeted region
             if (root.draggingX === root.dragStartX && root.draggingY === root.dragStartY) {
                 if (root.targetedRegionValid()) {
