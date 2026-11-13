@@ -84,6 +84,10 @@ hl.bind("CTRL + SUPER + R", hl.dsp.exec_cmd("killall ydotool qs quickshell; qs -
 
 --##! Utilities
 --# Screenshot, Record, OCR, Color picker, Clipboard history
+-- Binds never reach the input hook above, so these cancel the Super tap themselves.
+for _, key in ipairs({ "SUPER + SHIFT + S", "SUPER + SHIFT + A", "SUPER + SHIFT + X", "SUPER + SHIFT + R" }) do
+    hl.bind(key, superUsed)
+end
 hl.bind("SUPER + SHIFT + S", hl.dsp.global("quickshell:regionScreenshot"), { description = "Utilities: Screen snip" })
 hl.bind("SUPER + SHIFT + S",
     hl.dsp.exec_cmd(qsRegionGuard .. "hyprshot --freeze --clipboard-only --mode region --silent"))
