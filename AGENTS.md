@@ -54,12 +54,6 @@ Every commit has the same author, so put the zone in the subject (`hypr:`, `pilo
   `hyprland/scripts/ensure-dynamic-cursors.sh` loads it at login and rebuilds it first when
   Hyprland was updated, because the ABI check rejects the old build.
 
-- `extras/install-handy.sh` installs Handy (offline speech to text). System libraries come from
-  pacman, the app itself from the release into `~/.local/opt/handy` with the binary in `bin/` and
-  everything else in `lib/Handy/`, because Tauri resolves resources as `../lib/Handy`. Toggle it
-  with `SUPER+ALT+D`, a Hyprland bind calling `handy --toggle-transcription`: the app's own hotkey
-  is X11-only and misses keys on Wayland, so `keyboard_implementation` stays `none`.
-
 ## Verify
 
 ```sh
