@@ -30,7 +30,6 @@ Item {
         anchors.centerIn: parent
         glyph: root.levelGlyph
         label: Math.round(root.percentage * 100) + "%"
-        valueWidth: 38
         warning: root.isLow
         active: root.isCharging
         trailingGlyph: root.isCharging && root.percentage < 1 ? "bolt" : ""

@@ -13,7 +13,6 @@ Item {
     property string trailingGlyph: ""
     property string label: ""
     property string iconSource: "" // brand marks, e.g. the harness badges
-    property real valueWidth: 0 // fixed box for values that change every second
     property bool active: false
     property bool warning: false
     property bool interactive: false
@@ -31,7 +30,7 @@ Item {
         : (active || hovered) ? Appearance.colors.colPrimary
         : Appearance.colors.colOnLayer0
 
-    implicitWidth: shown ? content.implicitWidth + 10 : 0
+    implicitWidth: shown ? content.implicitWidth + 8 : 0
     implicitHeight: 28
     clip: true
     transformOrigin: Item.Center
@@ -50,7 +49,7 @@ Item {
     RowLayout {
         id: content
         anchors.centerIn: parent
-        spacing: 6
+        spacing: 8
         visible: root.shown
 
         MaterialSymbol {
@@ -74,7 +73,6 @@ Item {
 
         StyledText {
             visible: root.label.length > 0
-            Layout.preferredWidth: root.valueWidth > 0 ? root.valueWidth : -1
             horizontalAlignment: Text.AlignLeft
             text: root.label
             color: root.labelColor
