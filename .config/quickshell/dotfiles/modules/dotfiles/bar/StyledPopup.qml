@@ -34,12 +34,17 @@ LazyLoader {
         exclusionMode: ExclusionMode.Ignore
         exclusiveZone: 0
         margins {
-            // Centre the whole surface, not just its inner background: the elevation
-            // margin is part of the window, and ignoring it shifted popups right.
-            left: root.QsWindow?.mapFromItem(
-                root.hoverTarget,
-                (root.hoverTarget.width - popupWindow.implicitWidth) / 2, 0
-            ).x
+            // Centre the popup background under its bar item, but keep it on screen:
+            // a widget at the edge would push half the popup off the display.
+            left: {
+                const screenWidth = root.QsWindow?.window?.screen?.width ?? 0;
+                const bgWidth = popupBackground.implicitWidth;
+                const gap = Appearance.sizes.hyprlandGapsOut;
+                const targetX = root.QsWindow?.mapFromItem(root.hoverTarget, 0, 0).x ?? 0;
+                const centred = targetX + (root.hoverTarget.width - bgWidth) / 2;
+                const clamped = Math.max(gap, Math.min(screenWidth - gap - bgWidth, centred));
+                return clamped - Appearance.sizes.elevationMargin;
+            }
             top: Appearance.sizes.barHeight
         }
         WlrLayershell.namespace: "quickshell:popup"
