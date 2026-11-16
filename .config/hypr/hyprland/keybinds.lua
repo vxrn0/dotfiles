@@ -7,14 +7,7 @@ end
 local qsScripts = "$HOME/.config/quickshell/$qsConfig/scripts"
 local hyprScripts = "$HOME/.config/hypr/hyprland/scripts"
 local qsIpcCall = "qs -c $qsConfig ipc call"
--- Fallback guard for the region binds. It must not depend on the shell process: while
--- Quickshell is restarting the process is briefly absent, the fallback fired anyway, and
--- hyprshot screenshotted the region selector the shell had just opened. Checking the
--- selector's own layer is the ground truth; the short wait covers the mapping delay.
 local qsIsAlive = "pgrep -x qs >/dev/null"
--- The shell owns region binds while it runs; the script only lets the fallback through when
--- no shell is alive. See the script for why waiting for the selector did not work.
-local qsRegionGuard = hyprScripts .. "/region_guard.sh || "
 
 hl.bind("SUPER_L", hl.dsp.global("quickshell:workspaceNumber"), { ignore_mods = true, transparent = true })
 hl.bind("SUPER_R", hl.dsp.global("quickshell:workspaceNumber"), { ignore_mods = true, transparent = true })
@@ -89,26 +82,17 @@ for _, key in ipairs({ "SUPER + SHIFT + S", "SUPER + SHIFT + A", "SUPER + SHIFT 
     hl.bind(key, superUsed)
 end
 hl.bind("SUPER + SHIFT + S", hl.dsp.global("quickshell:regionScreenshot"), { description = "Utilities: Screen snip" })
-hl.bind("SUPER + SHIFT + S",
-    hl.dsp.exec_cmd(qsRegionGuard .. "hyprshot --freeze --clipboard-only --mode region --silent"))
 hl.bind("SUPER + SHIFT + A", hl.dsp.global("quickshell:regionSearch"), { description = "Utilities: Google Lens" })
-hl.bind("SUPER + SHIFT + A", hl.dsp.exec_cmd(qsRegionGuard .. hyprScripts .. "/snip_to_search.sh"))
 --# OCR
 hl.bind("SUPER + SHIFT + X", hl.dsp.global("quickshell:regionOcr"),
     { description = "Utilities: Character recognition >> clipboard" })
-hl.bind("SUPER + SHIFT + X", hl.dsp.exec_cmd(
-    qsRegionGuard ..
-    "grim -g \"$(slurp $SLURP_ARGS)\" \"/tmp/ocr_image.png\" && tesseract \"/tmp/ocr_image.png\" stdout -l $(tesseract --list-langs | awk 'NR>1{print $1}' | tr '\\\\n' '+' | sed 's/\\\\+$/\\\\n/') | wl-copy && rm \"/tmp/ocr_image.png\""
-))
 --# Color picker
 hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a -z -n"),
     { description = "Utilities: Pick color #RRGGBB >> clipboard" })
 --# Recording stuff
 hl.bind("SUPER + SHIFT + R", hl.dsp.global("quickshell:regionRecord"),
     { locked = true, description = "Utilities: Record region (no sound)" })
-hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd(qsRegionGuard .. qsScripts .. "/videos/record.sh"), { locked = true })
 hl.bind("SUPER + ALT + R", hl.dsp.global("quickshell:regionRecord"), { locked = true })
-hl.bind("SUPER + ALT + R", hl.dsp.exec_cmd(qsRegionGuard .. qsScripts .. "/videos/record.sh"), { locked = true })
 hl.bind("CTRL + ALT + R", hl.dsp.exec_cmd(qsScripts .. "/videos/record.sh --fullscreen"), { locked = true })
 hl.bind("SUPER + SHIFT + ALT + R", hl.dsp.exec_cmd(qsScripts .. "/videos/record.sh --fullscreen --sound"),
     { locked = true, description = "Utilities: Record screen (with sound)" })
