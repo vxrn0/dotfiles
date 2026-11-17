@@ -23,11 +23,13 @@ if [ ! -x "$BUILDER" ]; then
     exit 1
 fi
 
-"$BUILDER" >/tmp/dynamic-cursors-build.log 2>&1
+LOG="$(mktemp "${XDG_RUNTIME_DIR:-/tmp}/dynamic-cursors-build.XXXXXX")" || exit 1
+"$BUILDER" >"$LOG" 2>&1
 
 if try_load; then
+    rm -f "$LOG"
     exit 0
 fi
 
-notify-send "Cursor plugin" "Rebuild failed, see /tmp/dynamic-cursors-build.log" 2>/dev/null || true
+notify-send "Cursor plugin" "Rebuild failed, see $LOG" 2>/dev/null || true
 exit 1

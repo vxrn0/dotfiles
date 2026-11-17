@@ -11,7 +11,13 @@ fi
 # Prompt for password if not provided
 if [[ -z "${UNLOCK_PASSWORD}" ]]; then
     echo -n 'Login password: ' >&2
-    read -s UNLOCK_PASSWORD || return
+    # `return` at top level only prints an error and continues, which used to restart
+    # the keyring with an empty password and report success.
+    read -rs UNLOCK_PASSWORD || { echo 'No password given' >&2; exit 1; }
+fi
+if [[ -z "${UNLOCK_PASSWORD}" ]]; then
+    echo 'Empty password' >&2
+    exit 1
 fi
 
 # Unlock

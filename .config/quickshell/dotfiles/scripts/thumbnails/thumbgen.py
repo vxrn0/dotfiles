@@ -28,7 +28,10 @@ thumbnail_size_map = {
 factory = None
 logger.remove()
 logger.add(sys.stdout, level="INFO")
-logger.add("/tmp/thumbgen.log", level="DEBUG", rotation="100 MB")
+# Per-user state directory, not a fixed /tmp path: a predictable file there can be
+# pre-planted as a symlink and truncated as the user on every run.
+_state_dir = os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))
+logger.add(os.path.join(_state_dir, "quickshell", "thumbgen.log"), level="DEBUG", rotation="100 MB")
 
 def make_thumbnail(fpath: str) -> bool:
     mtime = os.path.getmtime(fpath)
@@ -56,7 +59,7 @@ def make_thumbnail(fpath: str) -> bool:
     return True
 
 
-@logger.catch()
+@logger.catch(reraise=True)
 def thumbnail_folder(*, dir_path: Path, workers: int, only_images: bool, recursive: bool, machine_progress: bool = False) -> None:
     all_files = get_all_files(dir_path=dir_path, recursive=recursive)
     if only_images:

@@ -140,7 +140,15 @@ EOF
 set_wallpaper_path() {
     local path="$1"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
-        jq --arg path "$path" '.wallpaper.path = $path' "$SHELL_CONFIG_FILE" > "$SHELL_CONFIG_FILE.tmp" && mv "$SHELL_CONFIG_FILE.tmp" "$SHELL_CONFIG_FILE"
+        # Unique temp in the same directory: a shared .tmp could be written by two
+        # invocations at once and leave the config half-written.
+        local tmp
+        tmp=$(mktemp "${SHELL_CONFIG_FILE}.XXXXXX") || return 1
+        if jq --arg path "$path" '.wallpaper.path = $path' "$SHELL_CONFIG_FILE" > "$tmp"; then
+            mv "$tmp" "$SHELL_CONFIG_FILE"
+        else
+            rm -f "$tmp"
+        fi
     fi
 }
 
@@ -149,7 +157,13 @@ set_thumbnail_path() {
     if [ -f "$SHELL_CONFIG_FILE" ]; then
         # Appearance.qml reads wallpaper.thumbnailPath; writing background.thumbnailPath
         # left video wallpapers with no colour source, so the shell fell back to defaults.
-        jq --arg path "$path" '.wallpaper.thumbnailPath = $path' "$SHELL_CONFIG_FILE" > "$SHELL_CONFIG_FILE.tmp" && mv "$SHELL_CONFIG_FILE.tmp" "$SHELL_CONFIG_FILE"
+        local tmp
+        tmp=$(mktemp "${SHELL_CONFIG_FILE}.XXXXXX") || return 1
+        if jq --arg path "$path" '.wallpaper.thumbnailPath = $path' "$SHELL_CONFIG_FILE" > "$tmp"; then
+            mv "$tmp" "$SHELL_CONFIG_FILE"
+        else
+            rm -f "$tmp"
+        fi
     fi
 }
 
@@ -162,9 +176,11 @@ categorize_wallpaper() {
 switch() {
     # Serialize concurrent invocations (external scripts, keybinds) so they cannot
     # kill a freshly launched mpvpaper or start two of them (#3633).
+    # Wait instead of dropping the request: a second wallpaper click must not
+    # silently report success while doing nothing.
     mkdir -p "$STATE_DIR"
     exec 9>"$STATE_DIR/switchwall.lock"
-    flock -n 9 || { echo "Another switchwall is running"; return 0; }
+    flock -w 30 9 || { echo "Another switchwall is running, giving up" >&2; exit 1; }
 
     imgpath="$1"
     mode_flag="$2"
@@ -219,7 +235,7 @@ switch() {
                     "Can't switch to video wallpaper" \
                     "Missing dependencies: ${missing_deps[*]}")
                 if [[ "$action" == "install_arch" ]]; then
-                    kitty -1 sudo pacman -S "${missing_deps[*]}"
+                    kitty -1 sudo pacman -S "${missing_deps[@]}"
                     if command -v mpvpaper &>/dev/null && command -v ffmpeg &>/dev/null; then
                         notify-send 'Wallpaper switcher' 'Alright, try again!' -a "Wallpaper switcher"
                     fi
@@ -345,7 +361,13 @@ main() {
     }
     set_accent_color() {
         local color="$1"
-        jq --arg color "$color" '.appearance.palette.accentColor = $color' "$SHELL_CONFIG_FILE" > "$SHELL_CONFIG_FILE.tmp" && mv "$SHELL_CONFIG_FILE.tmp" "$SHELL_CONFIG_FILE"
+        local tmp
+        tmp=$(mktemp "${SHELL_CONFIG_FILE}.XXXXXX") || return 1
+        if jq --arg color "$color" '.appearance.palette.accentColor = $color' "$SHELL_CONFIG_FILE" > "$tmp"; then
+            mv "$tmp" "$SHELL_CONFIG_FILE"
+        else
+            rm -f "$tmp"
+        fi
     }
 
     detect_scheme_type_from_image() {
@@ -424,7 +446,12 @@ main() {
     # Only prompt for wallpaper if not using --color and not using --noswitch and no imgpath set
     if [[ -z "$imgpath" && -z "$color_flag" && -z "$noswitch_flag" ]]; then
         cd "$(xdg-user-dir PICTURES)/Wallpapers/showcase" 2>/dev/null || cd "$HOME/extra" 2>/dev/null || cd "$HOME" || return 1
-        imgpath="$(kdialog --getopenfilename . --title 'Choose wallpaper')"
+        # kdialog is not installed everywhere; zenity ships with the desktop already.
+        if command -v kdialog >/dev/null 2>&1; then
+            imgpath="$(kdialog --getopenfilename . --title 'Choose wallpaper')"
+        else
+            imgpath="$(zenity --file-selection --title='Choose wallpaper' --filename="$PWD/")"
+        fi
     fi
 
     if [[ -n "$imgpath" && -z "$noswitch_flag" ]]; then
