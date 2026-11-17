@@ -14,8 +14,12 @@ Rectangle {
     implicitHeight: content.implicitHeight + 20
 
     readonly property string preview: {
-        const path = Config.options.wallpaper.thumbnailPath;
-        return path.length > 0 ? path : Config.options.wallpaper.path;
+        const path = Config.options.wallpaper.path;
+        const isVideo = [".mp4", ".webm", ".mkv", ".avi", ".mov"].some(ext => path.endsWith(ext));
+        // thumbnailPath is a frame of the current video wallpaper; for a static image it
+        // is stale and would show the previous video's frame.
+        const thumbnail = Config.options.wallpaper.thumbnailPath;
+        return isVideo && thumbnail.length > 0 ? thumbnail : path;
     }
     readonly property bool dark: Appearance.m3colors.darkmode
 

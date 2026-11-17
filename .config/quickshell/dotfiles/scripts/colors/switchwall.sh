@@ -100,7 +100,15 @@ is_video() {
 }
 
 kill_existing_mpvpaper() {
-    pkill -f -9 mpvpaper || true
+    # Kill by exact process name (not -f, which can match the new instance we are
+    # about to launch) and wait for it to exit, so repeated switchwall calls do not
+    # race and silently kill mpvpaper (#3633).
+    pkill -x mpvpaper 2>/dev/null || true
+    for _ in $(seq 1 50); do
+        pgrep -x mpvpaper >/dev/null || return 0
+        sleep 0.1
+    done
+    pkill -9 -x mpvpaper 2>/dev/null || true
 }
 
 create_restore_script() {
@@ -152,6 +160,12 @@ categorize_wallpaper() {
 }
 
 switch() {
+    # Serialize concurrent invocations (external scripts, keybinds) so they cannot
+    # kill a freshly launched mpvpaper or start two of them (#3633).
+    mkdir -p "$STATE_DIR"
+    exec 9>"$STATE_DIR/switchwall.lock"
+    flock -n 9 || { echo "Another switchwall is running"; return 0; }
+
     imgpath="$1"
     mode_flag="$2"
     type_flag="$3"
@@ -245,6 +259,8 @@ switch() {
             generate_colors_material_args=(--path "$imgpath")
             # Update wallpaper path in config
             set_wallpaper_path "$imgpath"
+            # Drop the previous video's frame, otherwise the quick panel keeps showing it
+            set_thumbnail_path ""
             remove_restore
         fi
     fi
