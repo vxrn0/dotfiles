@@ -105,12 +105,15 @@ Singleton {
             onRead: line => {
                 // print("err:", line)
                 if (line.includes("Secrets were required")) {
-                    root.wifiConnectTarget.askingPassword = true
+                    if (root.wifiConnectTarget)
+                        root.wifiConnectTarget.askingPassword = true
                 }
             }
         }
         onExited: (exitCode, exitStatus) => {
-            root.wifiConnectTarget.askingPassword = (exitCode !== 0)
+            // A password retry runs without a target; do not dereference null.
+            if (root.wifiConnectTarget)
+                root.wifiConnectTarget.askingPassword = false
             root.wifiConnectTarget = null
         }
     }
@@ -138,6 +141,12 @@ Singleton {
                 wifiScanning = false;
                 getNetworks.running = true;
             }
+        }
+        // nmcli can fail without printing anything (radio off), and the spinner
+        // would stay on forever.
+        onExited: {
+            wifiScanning = false;
+            getNetworks.running = true;
         }
     }
 
@@ -179,7 +188,7 @@ Singleton {
             let hasWifi = false;
             let wifiStatus = "disconnected";
             lines.forEach(line => {
-                if (line.includes("ethernet") && line.includes("connected"))
+                if (line.includes("ethernet:connected"))
                     hasEthernet = true;
                 else if (line.includes("wifi:")) {
                     if (line.includes("disconnected")) {
@@ -210,7 +219,8 @@ Singleton {
 
     Process {
         id: updateNetworkName
-        command: ["sh", "-c", "nmcli -t -f NAME c show --active | head -1"]
+        // The first active connection can be the wired profile; the toggle shows Wi-Fi.
+        command: ["sh", "-c", "nmcli -t -f NAME,TYPE c show --active | awk -F: '$2==\"802-11-wireless\"{print $1; exit}'"]
         running: true
         stdout: SplitParser {
             onRead: data => {

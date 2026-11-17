@@ -68,6 +68,11 @@ Singleton {
             fileMeminfo.reload()
             fileStat.reload()
 
+            // reload() is asynchronous; reading text() right away returned an empty
+            // string and the first sample recorded 100% memory and 0 GB total.
+            if (!fileMeminfo.loaded || !fileStat.loaded)
+                return;
+
             // Parse memory and swap usage
             const textMeminfo = fileMeminfo.text()
             memoryTotal = Number(textMeminfo.match(/MemTotal: *(\d+)/)?.[1] ?? 1)

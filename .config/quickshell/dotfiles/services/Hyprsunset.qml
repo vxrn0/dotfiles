@@ -132,16 +132,21 @@ Singleton {
     Process {
         id: fetchProc
         running: true
-        command: ["bash", "-c", "hyprctl hyprsunset temperature"]
+        // Read gamma too: after a shell reload hyprsunset keeps running, and the
+        // slider used to reset to 100 while the screen stayed dimmed.
+        command: ["bash", "-c", "hyprctl hyprsunset temperature; hyprctl hyprsunset gamma"]
         stdout: StdioCollector {
             id: stateCollector
             onStreamFinished: {
-                const output = stateCollector.text.trim();
+                const lines = stateCollector.text.trim().split("\n");
+                const output = (lines[0] ?? "").trim();
                 if (output.length == 0 || output.startsWith("Couldn't"))
                     root.temperatureActive = false;
                 else
                     root.temperatureActive = (output != root.defaultColorTemperature); // 6000 is the default when off
-                // console.log("[Hyprsunset] Fetched state:", output, "->", root.temperatureActive);
+                const fetchedGamma = parseFloat((lines[1] ?? "").trim());
+                if (!isNaN(fetchedGamma))
+                    root.gamma = Math.max(root.gammaLowerLimit, Math.min(100, fetchedGamma));
             }
         }
     }
