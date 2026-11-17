@@ -18,11 +18,16 @@ MouseArea {
 
     // Start in the folder of the current wallpaper. The singleton's own default runs before
     // Config is ready, so the picker would otherwise fall back to Pictures every time.
-    Component.onCompleted: Wallpapers.setDirectory(FileUtils.trimFileProtocol(
-        Config.options.wallpaper.path.length > 0
-            ? FileUtils.parentDirectory(Config.options.wallpaper.path)
-            : Directories.pictures
-    ))
+    // The search query lives in the singleton and survives closing the picker, which
+    // left the grid filtered (often empty) behind an empty search box.
+    Component.onCompleted: {
+        Wallpapers.searchQuery = "";
+        Wallpapers.setDirectory(FileUtils.trimFileProtocol(
+            Config.options.wallpaper.path.length > 0
+                ? FileUtils.parentDirectory(Config.options.wallpaper.path)
+                : Directories.pictures
+        ));
+    }
 
     function updateThumbnails() {
         const totalImageMargin = (Appearance.sizes.wallpaperSelectorItemMargins + Appearance.sizes.wallpaperSelectorItemPadding) * 2;

@@ -88,7 +88,10 @@ Singleton {
             if (/^\/*$/.test(validateDirProc.nicePath)) validateDirProc.nicePath = "/";
             validateDirProc.exec([
                 "bash", "-c",
-                `if [ -d "${validateDirProc.nicePath}" ]; then echo dir; elif [ -f "${validateDirProc.nicePath}" ]; then echo file; else echo invalid; fi`
+                // Pass the path as an argument: interpolating it into the script let a
+                // crafted clipboard entry like file:///tmp/$(cmd) execute commands.
+                'if [ -d "$1" ]; then echo dir; elif [ -f "$1" ]; then echo file; else echo invalid; fi',
+                "--", validateDirProc.nicePath
             ])
         }
         stdout: StdioCollector {
@@ -125,7 +128,14 @@ Singleton {
         id: folderModel
         folder: Qt.resolvedUrl(root.defaultFolder)
         caseSensitive: false
-        nameFilters: root.extensions.map(ext => `*${searchQuery.split(" ").filter(s => s.length > 0).map(s => `*${s}*`)}*.${ext}`)
+        nameFilters: {
+            const words = searchQuery.split(" ").filter(s => s.length > 0);
+            if (words.length === 0)
+                return root.extensions.map(ext => `*.${ext}`);
+            // Each word becomes its own filter: the old code joined them into one
+            // glob ("**dark*,*blue**.jpg") that matched nothing.
+            return root.extensions.flatMap(ext => words.map(word => `*${word}*.${ext}`));
+        }
         showDirs: true
         showDotAndDotDot: false
         showOnlyReadable: true
@@ -147,7 +157,9 @@ Singleton {
         thumbgenProc.running = false
         thumbgenProc.command = [
             "bash", "-c",
-            `${thumbgenScriptPath} --size ${size} --machine_progress -d ${FileUtils.trimFileProtocol(root.directory)} || ${generateThumbnailsMagickScriptPath} --size ${size} -d ${FileUtils.trimFileProtocol(root.directory)}`,
+            // "$1" keeps folders with spaces intact and blocks shell expansion.
+            `${thumbgenScriptPath} --size ${size} --machine_progress -d "$1" || ${generateThumbnailsMagickScriptPath} --size ${size} -d "$1"`,
+            "--", FileUtils.trimFileProtocol(root.directory),
         ]
         // console.log("[Wallpapers] Updating thumbnails with command ", thumbgenProc.command.join(" "))
         root.thumbnailGenerationProgress = 0
