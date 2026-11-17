@@ -37,7 +37,7 @@ Item { // Wrapper
     }
 
     function cancelSearch() {
-        searchBar.searchInput.selectAll();
+        searchBar.searchInput.text = "";
         LauncherSearch.query = "";
         searchBar.animateWidth = true;
     }
@@ -132,7 +132,7 @@ Item { // Wrapper
             layer.effect: OpacityMask {
                 maskSource: Rectangle {
                     width: searchWidgetContent.width
-                    height: searchWidgetContent.width
+                    height: searchWidgetContent.height
                     radius: searchWidgetContent.radius
                 }
             }
@@ -187,7 +187,8 @@ Item { // Wrapper
                     id: debounceTimer
                     interval: root.typingDebounceInterval
                     onTriggered: {
-                        resultModel.values = LauncherSearch.results ?? [];
+                        // Keep the typing limit; assigning the full list here undid it.
+                        resultModel.values = (LauncherSearch.results ?? []).slice(0, root.typingResultLimit);
                     }
                 }
 

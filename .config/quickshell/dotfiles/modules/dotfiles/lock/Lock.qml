@@ -49,7 +49,9 @@ LockScreen {
                     var mon = Quickshell.screens[i].name
                     var mData = HyprlandData.monitors.find(m => m.name === mon)
                     if (mData?.activeWorkspace == undefined) {
-                        return;
+                        // A monitor can be missing from HyprlandData right after hotplug;
+                        // skipping it must not cancel the whole batch.
+                        continue;
                     }
                     var ws = (mData?.activeWorkspace?.id ?? 1)
                     next[mon] = ws

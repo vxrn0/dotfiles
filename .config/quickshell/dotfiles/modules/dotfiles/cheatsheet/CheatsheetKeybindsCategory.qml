@@ -118,8 +118,8 @@ Column {
     function containsNonFirstRepetitive(bind) {
         const key = bind.key;
         if (key.includes("mouse") || key.includes("page")) return false;
-        // Contains non-1 number
-        if (/\d/.test(key) && !key.includes("1")) return true;
+        // Numbered binds are bare digits; F2..F9 are function keys and must stay.
+        if (/^[2-9]$/.test(key)) return true;
         // Contains non-left direction
         if (/^(right|up|down)\b/i.test(key)) return true;
         return false;
@@ -127,12 +127,14 @@ Column {
 
     function containsFirstRepetitive(bind) {
         const key = bind.key;
-        return key.includes("1") || /left/i.test(key);
+        return key === "1" || /left/i.test(key);
     }
 
     function transformKey(key) {
         const replaced = root.keySubstitutions[key] || key;
-        const denumbered = replaced.replace("1", "<Number>");
+        // Only a bare "1" is a numbered bind; replacing the first "1" turned F10
+        // into "F<Number>0".
+        const denumbered = replaced === "1" ? "<Number>" : replaced;
         const dedirectioned = denumbered.replace("Left", "<Direction>");
         return dedirectioned;
     }
@@ -142,7 +144,7 @@ Column {
         const regex = new RegExp("\\s*" + categoryName + "\\s*:\\s*");
         const decategorized = description.replace(regex, "");
         if (!containsFirstRepetitive(bind)) return decategorized;
-        const denumbered = decategorized.replace("1", "<Number>");
+        const denumbered = decategorized.replace(/\b1\b/, "<Number>");
         const dedirectioned = denumbered.replace(/ \b(left|right|up|down)\b/i, " <Direction>");
         return dedirectioned;
     }

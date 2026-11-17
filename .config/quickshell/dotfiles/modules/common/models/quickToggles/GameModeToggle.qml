@@ -10,8 +10,9 @@ QuickToggleModel {
     icon: "sports_esports"
 
     mainAction: () => {
-        root.toggled = !root.toggled;
-        if (root.toggled) {
+        // Do not assign toggled here: it is bound to confOpt and the assignment broke
+        // the binding, so the toggle stopped following the real Hyprland state.
+        if (!confOpt.value) {
             HyprlandConfig.setMany({
                 "animations:enabled": 0,
                 "decoration:shadow:enabled": 0,

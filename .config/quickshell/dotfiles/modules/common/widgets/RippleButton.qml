@@ -79,6 +79,12 @@ Button {
         onReleased: (event) => {
             root.down = false
             if (event.button != Qt.LeftButton) return;
+            // A press that is released outside the button is not a click.
+            const inside = event.x >= 0 && event.y >= 0 && event.x < width && event.y < height
+            if (!inside) {
+                if (root.rippleEnabled) rippleFadeAnim.restart();
+                return;
+            }
             if (root.releaseAction) root.releaseAction();
             root.click() // Because the MouseArea already consumed the event
             if (!root.rippleEnabled) return;

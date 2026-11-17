@@ -79,14 +79,20 @@ Scope {
                     implicitWidth: Config.options.sidebar.cornerOpen.cornerRegionWidth
                     implicitHeight: Config.options.sidebar.cornerOpen.cornerRegionHeight
                     hoverEnabled: true
+                    property bool atEdge: false
                     onPositionChanged: {
                         if (!Config.options.sidebar.cornerOpen.clicklessCornerEnd) return;
                         const verticalOffset = Config.options.sidebar.cornerOpen.clicklessCornerVerticalOffset;
                         const correctX = (cornerWidget.isRight && mouseArea.mouseX >= mouseArea.width - 2) || (cornerWidget.isLeft && mouseArea.mouseX <= 2);
                         const correctY = (cornerWidget.isTop && mouseArea.mouseY > verticalOffset || cornerWidget.isBottom && mouseArea.mouseY < mouseArea.height - verticalOffset);
-                        if (correctX && correctY)
+                        const inZone = correctX && correctY;
+                        // Fire on entering the edge strip only: firing on every move
+                        // toggled the sidebar open and closed while sliding along it.
+                        if (inZone && !mouseArea.atEdge)
                             screenCorners.actionForCorner[cornerPanelWindow.corner]();
+                        mouseArea.atEdge = inZone;
                     }
+                    onExited: mouseArea.atEdge = false
                     onEntered: {
                         if (Config.options.sidebar.cornerOpen.clickless)
                             screenCorners.actionForCorner[cornerPanelWindow.corner]();

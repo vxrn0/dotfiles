@@ -56,8 +56,12 @@ Rectangle {
             active: Config.options.sidebar.quickSliders.showVolume
             sourceComponent: QuickSlider {
                 materialSymbol: "volume_up"
-                value: Audio.sink.audio.volume
-                onMoved: Audio.sink.audio.volume = value
+                value: Audio.sink?.audio?.volume ?? 0
+                // Slider.moved() has no arguments; `value` is the slider's own property.
+                onMoved: {
+                    if (Audio.sink?.audio)
+                        Audio.sink.audio.volume = value;
+                }
             }
         }
 
@@ -67,8 +71,11 @@ Rectangle {
             active: Config.options.sidebar.quickSliders.showMic
             sourceComponent: QuickSlider {
                 materialSymbol: "mic"
-                value: Audio.source.audio.volume
-                onMoved: Audio.source.audio.volume = value
+                value: Audio.source?.audio?.volume ?? 0
+                onMoved: {
+                    if (Audio.source?.audio)
+                        Audio.source.audio.volume = value;
+                }
             }
         }
     }

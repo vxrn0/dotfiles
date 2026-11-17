@@ -12,8 +12,20 @@ LazyLoader {
     property Item hoverTarget
     default property Item contentItem
     property real popupBackgroundMargin: 0
+    property bool clickOpened: false
 
-    active: hoverTarget && hoverTarget.containsMouse
+    // With clickToShow the popup must open on a click on the target; hover alone
+    // was disabled and nothing ever set the popup open.
+    active: hoverTarget && (hoverTarget.containsMouse
+        || (Config.options.bar.tooltips.clickToShow && root.clickOpened))
+
+    Connections {
+        target: root.hoverTarget
+        enabled: Config.options.bar.tooltips.clickToShow
+        function onClicked() {
+            root.clickOpened = !root.clickOpened;
+        }
+    }
 
     component: PanelWindow {
         id: popupWindow
