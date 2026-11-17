@@ -68,7 +68,7 @@ Singleton {
                 return ["bash", "-c", `${cropInPlace} && tesseract '${StringUtils.shellSingleQuoteEscape(screenshotPath)}' stdout -l $(tesseract --list-langs | awk 'NR>1{print $1}' | tr '\\n' '+' | sed 's/\\+$/\\n/') | wl-copy && ${cleanup}`]
                 break;
             case ScreenshotAction.Action.Record:
-                return ["bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}' --sound`]
+                return ["bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}'`]
                 break;
             case ScreenshotAction.Action.RecordWithSound:
                 return ["bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}' --sound`]

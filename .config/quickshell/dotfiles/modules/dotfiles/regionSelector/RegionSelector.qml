@@ -15,17 +15,29 @@ Scope {
 
     property var action: RegionSelection.SnipAction.Copy
     property var selectionMode: RegionSelection.SelectionMode.RectCorners
+    property string recordingScreen: "" // screen that owns an active recording
+
+    Connections {
+        target: GlobalStates
+        function onRegionSelectorOpenChanged() {
+            if (!GlobalStates.regionSelectorOpen)
+                root.recordingScreen = "";
+        }
+    }
     
     Variants {
         model: Quickshell.screens
         delegate: Loader {
             id: regionSelectorLoader
             required property var modelData
+            // While recording, only the screen that started it stays loaded.
             active: GlobalStates.regionSelectorOpen
+                && (root.recordingScreen === "" || regionSelectorLoader.modelData.name === root.recordingScreen)
 
             sourceComponent: RegionSelection {
                 screen: regionSelectorLoader.modelData
                 onDismiss: root.dismiss()
+                onRecordingStarted: (screenName) => root.recordingScreen = screenName
                 action: root.action
                 selectionMode: root.selectionMode
             }
@@ -33,12 +45,14 @@ Scope {
     }
 
     function screenshot() {
+        if (GlobalStates.regionSelectorOpen) return
         root.action = RegionSelection.SnipAction.Copy
         root.selectionMode = RegionSelection.SelectionMode.RectCorners
         GlobalStates.regionSelectorOpen = true
     }
 
     function search() {
+        if (GlobalStates.regionSelectorOpen) return
         root.action = RegionSelection.SnipAction.Search
         if (Config.options.search.imageSearch.useCircleSelection) {
             root.selectionMode = RegionSelection.SelectionMode.Circle
@@ -49,6 +63,7 @@ Scope {
     }
 
     function ocr() {
+        if (GlobalStates.regionSelectorOpen) return
         root.action = RegionSelection.SnipAction.CharRecognition
         root.selectionMode = RegionSelection.SelectionMode.RectCorners
         GlobalStates.regionSelectorOpen = true

@@ -36,6 +36,7 @@ PanelWindow {
     property var selectionMode: RegionSelection.SelectionMode.RectCorners
     property var phase: RegionSelection.Phase.Select
     signal dismiss()
+    signal recordingStarted(string screenName)
 
     // Styles
     property string screenshotDir: Directories.screenshotTemp
@@ -266,7 +267,9 @@ PanelWindow {
         // Validity check
         if (root.regionWidth <= 0 || root.regionHeight <= 0) {
             console.warn("[Region Selector] Invalid region size, skipping snip.");
+            // dismiss() destroys this item; continuing would touch a dead object.
             root.dismiss();
+            return;
         }
 
         // Clamp region to screen bounds
@@ -294,6 +297,9 @@ PanelWindow {
         )
         Quickshell.execDetached(command);
         if (root.action == RegionSelection.SnipAction.Record || root.action == RegionSelection.SnipAction.RecordWithSound) {
+            // Only one screen may own the recording; the others must leave Select
+            // phase, or clicking them would start a second wf-recorder.
+            root.recordingStarted(root.screen.name);
             root.phase = RegionSelection.Phase.Post
             root.selectionMode = RegionSelection.SelectionMode.RectCorners
         } else {
