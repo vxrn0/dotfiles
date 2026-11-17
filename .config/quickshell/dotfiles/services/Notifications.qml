@@ -78,6 +78,8 @@ Singleton {
 
     property bool silent: false
     property int unread: 0
+    property bool loaded: false
+    property list<var> pendingNotifications: []
     property var filePath: Directories.notificationsPath
     property list<Notif> list: []
     property var popupList: list.filter((notif) => notif.popup);
@@ -163,29 +165,44 @@ Singleton {
         persistenceSupported: true
 
         onNotification: (notification) => {
-            notification.tracked = true
-            const newNotifObject = notifComponent.createObject(root, {
-                "notificationId": notification.id + root.idOffset,
-                "notification": notification,
-                "time": Date.now(),
-            });
-			root.list = [...root.list, newNotifObject];
-
-            // Popup
-            if (!root.popupInhibited) {
-                newNotifObject.popup = true;
-                if (notification.expireTimeout != 0) {
-                    newNotifObject.timer = notifTimerComponent.createObject(root, {
-                        "notificationId": newNotifObject.notificationId,
-                        "interval": notification.expireTimeout < 0 ? (Config?.options.notifications.timeout ?? 7000) : notification.expireTimeout,
-                    });
-                }
-                root.unread++;
+            // The history file loads asynchronously; ids are only stable after that.
+            // Queue anything that arrives earlier instead of racing the load.
+            if (!root.loaded) {
+                root.pendingNotifications = [...root.pendingNotifications, notification];
+                return;
             }
-            root.notify(newNotifObject);
-            // console.log(notifToString(newNotifObject));
-            notifFileView.setText(stringifyList(root.list));
+            root.handleNotification(notification);
         }
+    }
+
+    function handleNotification(notification) {
+        notification.tracked = true
+        const newNotifObject = notifComponent.createObject(root, {
+            "notificationId": notification.id + root.idOffset,
+            "notification": notification,
+            "time": Date.now(),
+        });
+        root.list = [...root.list, newNotifObject];
+
+        // Popup
+        if (!root.popupInhibited) {
+            newNotifObject.popup = true;
+            if (notification.expireTimeout != 0) {
+                newNotifObject.timer = notifTimerComponent.createObject(root, {
+                    "notificationId": newNotifObject.notificationId,
+                    "interval": notification.expireTimeout < 0 ? (Config?.options.notifications.timeout ?? 7000) : notification.expireTimeout,
+                });
+            }
+            root.unread++;
+        }
+        root.notify(newNotifObject);
+        notifFileView.setText(stringifyList(root.list));
+    }
+
+    function flushPendingNotifications() {
+        const pending = root.pendingNotifications;
+        root.pendingNotifications = [];
+        pending.forEach((notification) => root.handleNotification(notification));
     }
 
     function markAllRead() {
@@ -197,9 +214,14 @@ Singleton {
         const index = root.list.findIndex((notif) => notif.notificationId === id);
         const notifServerIndex = notifServer.trackedNotifications.values.findIndex((notif) => notif.id + root.idOffset === id);
         if (index !== -1) {
+            const removed = root.list[index];
             root.list.splice(index, 1);
             notifFileView.setText(stringifyList(root.list));
             triggerListChange()
+            // The wrapper is a C++-owned QObject; dropping it from the list alone
+            // leaked every notification ever received for the whole session.
+            // Destroy after the delegates have detached from it.
+            Qt.callLater(() => removed.destroy());
         }
         if (notifServerIndex !== -1) {
             notifServer.trackedNotifications.values[notifServerIndex].dismiss()
@@ -208,19 +230,21 @@ Singleton {
     }
 
     function discardAllNotifications() {
+        const removed = root.list;
         root.list = []
         triggerListChange()
         notifFileView.setText(stringifyList(root.list));
         notifServer.trackedNotifications.values.forEach((notif) => {
             notif.dismiss()
         })
+        removed.forEach((notif) => Qt.callLater(() => notif.destroy()));
         root.discardAll();
     }
 
     function cancelTimeout(id) {
         const index = root.list.findIndex((notif) => notif.notificationId === id);
-        if (root.list[index] != null)
-            root.list[index].timer.stop();
+        // Notifications with expireTimeout 0 have no timer at all.
+        root.list[index]?.timer?.stop();
     }
 
     function timeoutNotification(id) {
@@ -293,6 +317,8 @@ Singleton {
 
             console.log("[Notifications] File loaded")
             root.idOffset = maxId
+            root.loaded = true
+            root.flushPendingNotifications()
             root.initDone()
         }
         onLoadFailed: (error) => {
@@ -303,6 +329,9 @@ Singleton {
             } else {
                 console.log("[Notifications] Error loading file: " + error)
             }
+            // Even with a broken history, live notifications must still work.
+            root.loaded = true
+            root.flushPendingNotifications()
         }
     }
 }
