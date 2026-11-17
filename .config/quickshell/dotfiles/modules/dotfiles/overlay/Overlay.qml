@@ -31,10 +31,23 @@ Scope {
             color: "transparent"
 
             mask: Region {
+                id: overlayMaskRegion
                 item: GlobalStates.overlayOpen ? overlayContent : null
-                regions: OverlayContext.clickableWidgets.map((widget) => regionComponent.createObject(this, {
-                    item: widget
-                }));
+                regions: overlayWindow.maskRegions
+            }
+
+            // Regions were created anew on every re-evaluation of clickableWidgets and
+            // the old ones were never destroyed, leaking for the window's lifetime.
+            property list<Region> maskRegions: []
+            function rebuildMaskRegions() {
+                maskRegions.forEach((region) => region.destroy());
+                maskRegions = OverlayContext.clickableWidgets.map((widget) =>
+                    regionComponent.createObject(overlayMaskRegion, { item: widget }));
+            }
+            Component.onCompleted: rebuildMaskRegions()
+            Connections {
+                target: OverlayContext
+                function onClickableWidgetsChanged() { overlayWindow.rebuildMaskRegions(); }
             }
 
             anchors {

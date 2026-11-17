@@ -24,7 +24,9 @@ Singleton {
     function pin(identifier: string, pin = true) {
         if (pin) {
             if (!root.pinnedWidgetIdentifiers.includes(identifier)) {
-                root.pinnedWidgetIdentifiers.push(identifier)
+                // Assign a new list: pushing into a list property does not notify,
+                // so hasPinnedWidgets and the overlay never updated.
+                root.pinnedWidgetIdentifiers = [...root.pinnedWidgetIdentifiers, identifier]
             }
         } else {
             root.pinnedWidgetIdentifiers = root.pinnedWidgetIdentifiers.filter(id => id !== identifier)
@@ -34,7 +36,8 @@ Singleton {
     function registerClickableWidget(widget: var, clickable = true) {
         if (clickable) {
             if (!root.clickableWidgets.includes(widget)) {
-                root.clickableWidgets.push(widget)
+                // Same reason as pin(): in-place push would not notify the mask.
+                root.clickableWidgets = [...root.clickableWidgets, widget]
             }
         } else {
             root.clickableWidgets = root.clickableWidgets.filter(w => w !== widget)

@@ -53,9 +53,10 @@ Item {
 
         Repeater {
             model: ScriptModel {
-                values: Persistent.states.overlay.open.map(identifier => {
-                    return OverlayContext.availableWidgets.find(w => w.identifier === identifier);
-                })
+                values: Persistent.states.overlay.open
+                    .map(identifier => OverlayContext.availableWidgets.find(w => w.identifier === identifier))
+                    // A saved id can outlive the widget it names; the delegate throws on undefined.
+                    .filter(w => w !== undefined)
                 objectProp: "identifier"
             }
             delegate: OverlayWidgetDelegateChooser {
