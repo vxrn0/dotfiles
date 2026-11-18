@@ -33,6 +33,28 @@ Decisions, not ideas. Zones are in `AGENTS.md`.
 | Pleamar | Rust shell with its own `.plm` language. It passes where Rune failed: `reserve:` is a real exclusive zone, `kind: lock` uses ext-session-lock, and it has network, bluetooth, audio, media, tray, notifications, workspaces and IPC. Missing against this shell: clipboard history, brightness, idle, night light, region capture, polkit, OSD, wallpaper and matugen. And there is no lazy loading at all, so every surface is built at startup — under the current 14 always-on panels that would raise memory, not lower it. First step would be one bar in a separate process, measured, before anything else. |
 | Seasonal desktop | Wallpaper scene that reacts to the machine: snow builds while the CPU is cool and melts when it heats up. Cheap by design, since swapping `wallpaper.path` is live and needs no shader. Parked by choice, not dropped. |
 
+## Rust backend plan
+
+One binary per concern, built in `extras/rust/`, installed to `~/.local/bin`. The bash and Python
+stay in place and keep working until the replacement is proven against them; a wrapper decides which
+one runs.
+
+| phase | replaces | size | risk |
+|-------|----------|------|------|
+| 1 | `colors/switchwall.sh` orchestration (matugen calls, monitors, video wallpaper, state files, thumbnails) | 514 lines bash | medium: touches the theme, but only through the same commands |
+| 2 | `colors/generate_colors_material.py` + `colors/scheme_for_image.py` (Material You scheme from an image) | 251 lines Python | high: needs HCT colour science to match matugen exactly, and it is what removes `materialyoucolor` from the venv |
+| 3 | `images/find_regions.py` (screenshot region detection) | 120 lines Python | low: pure function, testable with fixtures |
+| 4 | `thumbnails/thumbgen.py` (GNOME thumbnailer wrapper) | 122 lines Python | low, but it depends on `gi`, not on the venv |
+| 5 | small scripts: `record.sh`, `prune.sh`, `keyring/*`, `applycolor.sh` | ~260 lines | low, one at a time |
+
+Order matters: phase 1 removes the most fragile code (bash quoting, silent failures) without needing
+new colour science, and phases 2-3 are what let the venv disappear. `kitty/search.py` is out of scope
+for good: kitty runs only Python kittens.
+
+Acceptance for every phase: run the old and the new implementation over the same inputs in a sandbox
+with `HOME` and `XDG_*` redirected to a temporary tree, then diff the results. Nothing ships on a
+prose description of "it should work".
+
 ## Open
 
 - Whether `webkit2gtk-4.1` (141 MB) goes. It was installed only for Handy and nothing requires it.
