@@ -41,11 +41,23 @@ apply_kitty() {
     sed -i "s/${colorlist[$i]} #/${colorvalues[$i]#\#}/g" "$STATE_DIR"/user/generated/terminal/kitty-theme.conf
   done
 
-  # Reload
+  # Push colors directly via remote control when available, so kitten themes and
+  # Kitty's OS-appearance auto-theme files cannot override the wallpaper palette
+  # on reload (#3550). Fall back to SIGUSR1 for setups without remote control.
   if ! pgrep -f kitty >/dev/null; then
     return
   fi
-  kill -SIGUSR1 $(pidof kitty)
+  local pushed=0
+  local sockdir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+  for sock in "$sockdir"/kitty.sock*; do
+    [ -S "$sock" ] || continue
+    if kitten @ --to "unix:$sock" set-colors --all --configured "$STATE_DIR/user/generated/terminal/kitty-theme.conf" 2>/dev/null; then
+      pushed=1
+    fi
+  done
+  if [ "$pushed" -eq 0 ]; then
+    kill -SIGUSR1 $(pidof kitty) 2>/dev/null || true
+  fi
 }
 
 apply_anyterm() {
