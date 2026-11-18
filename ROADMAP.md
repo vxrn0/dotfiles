@@ -57,8 +57,7 @@ prose description of "it should work".
 
 ## Open
 
-- Whether `webkit2gtk-4.1` (141 MB) goes. It was installed only for Handy and nothing requires it.
-- Order of the Rust rewrite: colour pipeline first, then image work, then the small scripts.
+- Order of the Rust rewrite: theme driver first, then the colour science, then image work, then the small scripts.
 - Live typing on Wayland is documented as unverified on Hyprland; only KWin and Mutter were tried.
   If the preedit misbehaves, use Live text (a HUD beside the cursor) or plain paste.
 
