@@ -7,7 +7,7 @@ Decisions, not ideas. Zones are in `AGENTS.md`.
 | # | what | size | note |
 |---|------|------|------|
 | 1 | Hex as the dictation app | 90 MB binary | Replaces Handy. Native Rust, no WebKit. |
-| 2 | Parakeet TDT 0.6B v3 for it | 705 MB | Russian and English with automatic language detection. Non-autoregressive TDT, the fastest multilingual entry in the catalog and the smallest multilingual one. Same file that was half-downloaded before, so nothing is guessed. |
+| 2 | Nemotron 3.5 ASR for it | 716 MB | Russian and English plus 25 more, and the only multilingual entry that streams. Words appear while you speak instead of after release. Trained on FLEURS, ~25x real time on the GPU. |
 | 3 | Zen from the AUR instead of flatpak | -2.5 GB disk, -20 MB RAM | Copy the profile to `~/.zen`, keep the flatpak until the copy is verified. |
 
 ## Decided, can be done offline
@@ -32,16 +32,24 @@ Decisions, not ideas. Zones are in `AGENTS.md`.
 
 - Whether `webkit2gtk-4.1` (141 MB) goes. It was installed only for Handy and nothing requires it.
 - Order of the Rust rewrite: colour pipeline first, then image work, then the small scripts.
+- Live typing on Wayland is documented as unverified on Hyprland; only KWin and Mutter were tried.
+  If the preedit misbehaves, use Live text (a HUD beside the cursor) or plain paste.
 
 ## Notes on the model choice
 
-Parakeet beats the alternatives on every axis that matters here: 705 MB against 886 MB for
-Whisper large-v3-turbo, no autoregressive decoding (so no repeat loops or invented sentences), and
-language detection built into the file, which means Russian and English need no setting to switch.
+Nemotron 3.5 ASR streams: it publishes partial text while the shortcut is held, so words show up as
+you speak instead of after release. It covers ru and en (27 languages), takes a language hint or
+detects one, and runs at roughly 25x real time on the GPU.
 
-Hex falls back to the CPU by itself when a GPU runs out of memory or turns out slower than the CPU,
-and it does not blacklist the driver for an out-of-memory error. On this machine the GPU has 7.4 GB
-free of 8 GB, so the model runs on the GPU, with the CPU as the safety net.
+The cost against Parakeet v3 is accuracy: 3.05% word error rate on LibriSpeech test-clean against
+1.95%, and 25x real time against 33x. Both are far beyond what dictation needs, and streaming is
+worth more than two points of WER on short utterances.
 
-Neither model streams, so Live typing shows no words while speaking; the finished text still lands
-in the focused field through the input method instead of the clipboard.
+Streaming only happens on a GPU, after the load probe succeeds; on the CPU Hex transcribes the whole
+clip and inserts it at the end. Hex switches to the CPU by itself when a GPU runs out of memory or
+turns out slower, and it does not blacklist the driver for an out-of-memory error. This machine has
+7.4 GB of 8 GB VRAM free.
+
+Chunking the audio by hand and calling the model after every word was considered and rejected: it
+cuts words at chunk edges, drops the context that decides punctuation and homophones, and cannot
+revise text already inserted. Hex's streaming path keeps one continuous stream instead.
