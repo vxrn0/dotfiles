@@ -8,6 +8,9 @@ matugen call and the `applycolor.sh` call are Rust. The colour science is not:
 `matugen` and `generate_colors_material.py` remain external calls, exactly as in
 the bash script.
 
+Do not run the binary outside the sandbox while the desktop is in use: with no
+argument it opens a wallpaper picker, and a successful run changes the theme.
+
 ## Build and test
 
 ```sh
