@@ -7,7 +7,7 @@ Decisions, not ideas. Zones are in `AGENTS.md`.
 | # | what | size | note |
 |---|------|------|------|
 | 1 | Hex as the dictation app | 90 MB binary | Replaces Handy. Native Rust, no WebKit. |
-| 2 | A Russian + English model for it | 469-886 MB | See the open question below. |
+| 2 | Parakeet TDT 0.6B v3 for it | 705 MB | Russian and English with automatic language detection. Non-autoregressive TDT, the fastest multilingual entry in the catalog and the smallest multilingual one. Same file that was half-downloaded before, so nothing is guessed. |
 | 3 | Zen from the AUR instead of flatpak | -2.5 GB disk, -20 MB RAM | Copy the profile to `~/.zen`, keep the flatpak until the copy is verified. |
 
 ## Decided, can be done offline
@@ -30,9 +30,18 @@ Decisions, not ideas. Zones are in `AGENTS.md`.
 
 ## Open
 
-- Which model ships with Hex. Its catalog has no Whisper Medium: the whisper entry is
-  `whisper-large-v3-turbo` at 886 MB, and Parakeet v3 is 705 MB. A custom Medium GGUF (469 MB)
-  can be imported through "Add model file…", which accepts `general.architecture whisper` with
-  Q8_0 tensors, but that path is untested here.
 - Whether `webkit2gtk-4.1` (141 MB) goes. It was installed only for Handy and nothing requires it.
 - Order of the Rust rewrite: colour pipeline first, then image work, then the small scripts.
+
+## Notes on the model choice
+
+Parakeet beats the alternatives on every axis that matters here: 705 MB against 886 MB for
+Whisper large-v3-turbo, no autoregressive decoding (so no repeat loops or invented sentences), and
+language detection built into the file, which means Russian and English need no setting to switch.
+
+Hex falls back to the CPU by itself when a GPU runs out of memory or turns out slower than the CPU,
+and it does not blacklist the driver for an out-of-memory error. On this machine the GPU has 7.4 GB
+free of 8 GB, so the model runs on the GPU, with the CPU as the safety net.
+
+Neither model streams, so Live typing shows no words while speaking; the finished text still lands
+in the focused field through the input method instead of the clipboard.
