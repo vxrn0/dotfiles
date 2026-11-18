@@ -84,8 +84,11 @@ Singleton {
 		}
 
 		function onTrackArtUrlChanged() {
-			// console.log("arturl:", activePlayer.trackArtUrl)
-			// root.updateTrack();
+			// Some players (and Cantata) briefly send an empty art URL after a cover
+			// update; ignore those so the previous cover stays on screen instead of
+			// disappearing (#3580).
+			if (!root.activePlayer?.trackArtUrl)
+				return;
 			if (root.activePlayer.uniqueId == root.activeTrack.uniqueId && root.activePlayer.trackArtUrl != root.activeTrack.artUrl) {
 				// cantata likes to send cover updates *BEFORE* updating the track info.
 				// as such, art url changes shouldn't be able to break the reverse animation
@@ -101,9 +104,13 @@ Singleton {
 
 	function updateTrack() {
 		//console.log(`update: ${this.activePlayer?.trackTitle ?? ""} : ${this.activePlayer?.trackArtists}`)
+		// Keep the last known cover when a player sends an empty art URL mid-track (#3580).
+		const newArtUrl = this.activePlayer?.trackArtUrl ?? "";
+		const sameTrack = this.activeTrack && this.activePlayer?.uniqueId === this.activeTrack.uniqueId;
+		const artUrl = newArtUrl !== "" ? newArtUrl : (sameTrack ? (this.activeTrack.artUrl ?? "") : "");
 		this.activeTrack = {
 			uniqueId: this.activePlayer?.uniqueId ?? 0,
-			artUrl: this.activePlayer?.trackArtUrl ?? "",
+			artUrl: artUrl,
 			title: this.activePlayer?.trackTitle || Translation.tr("Unknown Title"),
 			artist: this.activePlayer?.trackArtist || Translation.tr("Unknown Artist"),
 			album: this.activePlayer?.trackAlbum || Translation.tr("Unknown Album"),
