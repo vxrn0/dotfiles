@@ -22,11 +22,16 @@ Decisions, not ideas. Zones are in `AGENTS.md`.
 
 | what | why |
 |------|-----|
-| Pleamar | Not now. Revisit only if the Rust backend feels insufficient. |
-| Seasonal desktop | Dropped. |
 | Rune for the shell | `set_exclusive_zone(0)` is hardcoded, so the bar cannot reserve space. |
 | Amane | Author paused it until mid-December. |
 | Cloud dictation (Groq) | Local model chosen. |
+
+## Parked, not now
+
+| what | what it is, and what it would take |
+|------|------------------------------------|
+| Pleamar | Rust shell with its own `.plm` language. It passes where Rune failed: `reserve:` is a real exclusive zone, `kind: lock` uses ext-session-lock, and it has network, bluetooth, audio, media, tray, notifications, workspaces and IPC. Missing against this shell: clipboard history, brightness, idle, night light, region capture, polkit, OSD, wallpaper and matugen. And there is no lazy loading at all, so every surface is built at startup — under the current 14 always-on panels that would raise memory, not lower it. First step would be one bar in a separate process, measured, before anything else. |
+| Seasonal desktop | Wallpaper scene that reacts to the machine: snow builds while the CPU is cool and melts when it heats up. Cheap by design, since swapping `wallpaper.path` is live and needs no shader. Parked by choice, not dropped. |
 
 ## Open
 
