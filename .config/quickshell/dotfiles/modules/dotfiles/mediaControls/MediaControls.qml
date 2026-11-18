@@ -1,45 +1,65 @@
+pragma ComponentBehavior: Bound
 import qs
 import qs.services
 import qs.modules.common
-import qs.modules.dotfiles.mediaControls
+import qs.modules.common.widgets
+import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Wayland
-import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import Quickshell.Wayland
+import Quickshell.Hyprland
 
-// Media panel, opened from the bar's media capsule. One card per MPRIS player.
-// The card window is sized to its content, so the stock Hyprland layer animation
-// scales the card, not the whole screen. A second, fully transparent full-screen
-// surface sits underneath to catch clicks outside the card.
 Scope {
     id: root
-    readonly property real widgetWidth: 360
-    readonly property real shadowMargin: Appearance.sizes.elevationMargin
-    readonly property real screenWidth: (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
-        ?? Quickshell.screens[0])?.width ?? 0
+    readonly property MprisPlayer activePlayer: MprisController.activePlayer
+    readonly property var realPlayers: MprisController.players
+    readonly property var meaningfulPlayers: filterDuplicatePlayers(realPlayers)
+    readonly property real widgetWidth: Appearance.sizes.mediaControlsWidth
+    readonly property real widgetHeight: Appearance.sizes.mediaControlsHeight
+    property real popupRounding: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
 
-    Connections {
-        target: MprisController
-        // The players property is a QML list and does not notify; activePlayer does.
-        function onActivePlayerChanged() {
-            if (MprisController.activePlayer === null)
-                GlobalStates.mediaControlsOpen = false;
+    function filterDuplicatePlayers(players) {
+        let filtered = [];
+        let used = new Set();
+
+        for (let i = 0; i < players.length; ++i) {
+            if (used.has(i))
+                continue;
+            let p1 = players[i];
+            let group = [i];
+
+            // Find duplicates by trackTitle prefix
+            for (let j = i + 1; j < players.length; ++j) {
+                let p2 = players[j];
+                if (p1.trackTitle && p2.trackTitle && (p1.trackTitle.includes(p2.trackTitle) || p2.trackTitle.includes(p1.trackTitle)) || (p1.position - p2.position <= 2 && p1.length - p2.length <= 2)) {
+                    group.push(j);
+                }
+            }
+
+            // Pick the one with non-empty trackArtUrl, or fallback to the first
+            let chosenIdx = group.find(idx => players[idx].trackArtUrl && players[idx].trackArtUrl.length > 0);
+            if (chosenIdx === undefined)
+                chosenIdx = group[0];
+
+            filtered.push(players[chosenIdx]);
+            group.forEach(idx => used.add(idx));
         }
+        return filtered;
     }
 
-    // Click-catcher: invisible, full screen, below the card. Any click here is a
-    // click outside the card.
+    // Hyprland clears its focus grab on its own a few seconds after it is taken, which
+    // closed this panel at random. A transparent full-screen surface under the card
+    // dismisses on any outside click instead.
     PanelWindow {
         id: dismissLayer
         visible: GlobalStates.mediaControlsOpen
         screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
             ?? Quickshell.screens[0] ?? null
         WlrLayershell.namespace: "quickshell:mediaControlsDismiss"
-        // Below the card layer, otherwise every click lands on the catcher and
-        // closes the panel instead of pressing the button under the pointer.
+        // Below the card layer, or the catcher would swallow the transport buttons.
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
@@ -59,81 +79,135 @@ Scope {
         }
     }
 
-    PanelWindow {
-        id: panelWindow
-        visible: GlobalStates.mediaControlsOpen
-        screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name)
-            ?? Quickshell.screens[0] ?? null
-        WlrLayershell.namespace: "quickshell:mediaControls"
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: GlobalStates.mediaControlsOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        exclusionMode: ExclusionMode.Ignore
-        exclusiveZone: 0
-        color: "transparent"
-        implicitWidth: root.widgetWidth + root.shadowMargin * 2
-        implicitHeight: columnLayout.implicitHeight + root.shadowMargin * 2
-
-        anchors {
-            top: true
-            left: true
-        }
-        margins {
-            top: Appearance.sizes.barHeight - root.shadowMargin
-            // Right edge under the media capsule's right edge, clamped to the screen.
-            left: {
-                const anchorX = GlobalStates.mediaControlsAnchorX >= 0
-                    ? GlobalStates.mediaControlsAnchorX
-                    : (root.screenWidth + root.widgetWidth) / 2;
-                return Math.max(Appearance.sizes.hyprlandGapsOut, Math.min(
-                    root.screenWidth - root.widgetWidth - Appearance.sizes.hyprlandGapsOut,
-                    anchorX - root.widgetWidth
-                )) - root.shadowMargin;
+    Loader {
+        id: mediaControlsLoader
+        active: GlobalStates.mediaControlsOpen
+        onActiveChanged: {
+            if (!mediaControlsLoader.active && root.realPlayers.length === 0) {
+                GlobalStates.mediaControlsOpen = false;
             }
         }
 
-        onVisibleChanged: {
-            if (visible)
-                focusScope.forceActiveFocus();
-        }
+        sourceComponent: PanelWindow {
+            id: panelWindow
+            visible: true
 
-        FocusScope {
-            id: focusScope
+            exclusionMode: ExclusionMode.Ignore
+            exclusiveZone: 0
+            implicitWidth: root.widgetWidth
+            implicitHeight: playerColumnLayout.implicitHeight
+            color: "transparent"
+            WlrLayershell.namespace: "quickshell:mediaControls"
+            // The shared focus grab clears itself immediately unless the surface accepts
+            // keyboard focus; the right sidebar does the same.
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+
             anchors {
-                top: parent.top
-                left: parent.left
-                right: parent.right
-                margins: root.shadowMargin
+                // Our bar only supports the top position.
+                top: true
+                left: true
             }
-            height: columnLayout.implicitHeight
-            focus: GlobalStates.mediaControlsOpen
-
-            Keys.onPressed: (event) => {
-                if (event.key === Qt.Key_Escape) {
-                    GlobalStates.mediaControlsOpen = false;
-                    event.accepted = true;
+            margins {
+                top: Appearance.sizes.barHeight
+                // Left edge under the bar's media capsule, clamped to the screen.
+                left: {
+                    const anchorX = GlobalStates.mediaControlsAnchorX >= 0
+                        ? GlobalStates.mediaControlsAnchorX
+                        : (panelWindow.screen.width - root.widgetWidth) / 2;
+                    return Math.max(Appearance.sizes.hyprlandGapsOut, Math.min(
+                        panelWindow.screen.width - root.widgetWidth - Appearance.sizes.hyprlandGapsOut,
+                        anchorX
+                    ));
                 }
             }
 
-            ColumnLayout {
-                id: columnLayout
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    right: parent.right
-                }
-                spacing: 10
+            mask: Region {
+                item: playerColumnLayout
+            }
 
-                Repeater {
-                    // The MPRIS list only changes when a player appears or disappears;
-                    // track changes keep the same delegate and its running animation.
-                    model: MprisController.players
-                    delegate: PlayerControl {
-                        required property int index
-                        required property MprisPlayer modelData
-                        player: modelData
-                        Layout.fillWidth: true
+            Component.onCompleted: {
+                focusScope.forceActiveFocus();
+            }
+            // Keyboard focus follows the open state so Esc reaches the card.
+            Connections {
+                target: GlobalStates
+                function onMediaControlsOpenChanged() {
+                    if (GlobalStates.mediaControlsOpen)
+                        Qt.callLater(() => focusScope.forceActiveFocus());
+                }
+            }
+
+            // Hyprland clears the focus grab unless the surface really holds keyboard
+            // focus; the right sidebar binds focus the same way.
+            FocusScope {
+                id: focusScope
+                anchors.fill: parent
+                focus: GlobalStates.mediaControlsOpen
+
+                Keys.onPressed: (event) => {
+                    if (event.key === Qt.Key_Escape) {
+                        GlobalStates.mediaControlsOpen = false;
+                        event.accepted = true;
                     }
                 }
+
+            ColumnLayout {
+                id: playerColumnLayout
+                anchors.fill: parent
+                spacing: -Appearance.sizes.elevationMargin // Shadow overlap okay
+
+                Repeater {
+                    model: ScriptModel {
+                        values: root.meaningfulPlayers
+                    }
+                    delegate: PlayerControl {
+                        required property MprisPlayer modelData
+                        player: modelData
+                        implicitWidth: root.widgetWidth
+                        implicitHeight: root.widgetHeight
+                        radius: root.popupRounding
+                    }
+                }
+
+                Item {
+                    // No player placeholder
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.leftMargin: Appearance.sizes.hyprlandGapsOut
+                    Layout.rightMargin: Appearance.sizes.hyprlandGapsOut
+                    visible: root.meaningfulPlayers.length === 0
+                    implicitWidth: placeholderBackground.implicitWidth + Appearance.sizes.elevationMargin
+                    implicitHeight: placeholderBackground.implicitHeight + Appearance.sizes.elevationMargin
+
+                    StyledRectangularShadow {
+                        target: placeholderBackground
+                    }
+
+                    Rectangle {
+                        id: placeholderBackground
+                        anchors.centerIn: parent
+                        color: Appearance.colors.colLayer0
+                        radius: root.popupRounding
+                        property real padding: 20
+                        implicitWidth: placeholderLayout.implicitWidth + padding * 2
+                        implicitHeight: placeholderLayout.implicitHeight + padding * 2
+
+                        ColumnLayout {
+                            id: placeholderLayout
+                            anchors.centerIn: parent
+
+                            StyledText {
+                                text: Translation.tr("No active player")
+                                font.pixelSize: Appearance.font.pixelSize.large
+                            }
+                            StyledText {
+                                color: Appearance.colors.colSubtext
+                                text: Translation.tr("Make sure your player has MPRIS support\nor try turning off duplicate player filtering")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                            }
+                        }
+                    }
+                }
+            }
             }
         }
     }
@@ -143,6 +217,8 @@ Scope {
 
         function toggle(): void {
             GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
+            if (GlobalStates.mediaControlsOpen)
+                Notifications.timeoutAll();
         }
 
         function close(): void {
@@ -150,8 +226,33 @@ Scope {
         }
 
         function open(): void {
-            if (MprisController.activePlayer !== null)
-                GlobalStates.mediaControlsOpen = true;
+            GlobalStates.mediaControlsOpen = true;
+            Notifications.timeoutAll();
+        }
+    }
+
+    GlobalShortcut {
+        name: "mediaControlsToggle"
+        description: "Toggles media controls on press"
+
+        onPressed: {
+            GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
+        }
+    }
+    GlobalShortcut {
+        name: "mediaControlsOpen"
+        description: "Opens media controls on press"
+
+        onPressed: {
+            GlobalStates.mediaControlsOpen = true;
+        }
+    }
+    GlobalShortcut {
+        name: "mediaControlsClose"
+        description: "Closes media controls on press"
+
+        onPressed: {
+            GlobalStates.mediaControlsOpen = false;
         }
     }
 }

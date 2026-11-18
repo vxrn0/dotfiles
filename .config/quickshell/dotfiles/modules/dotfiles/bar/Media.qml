@@ -18,6 +18,19 @@ Item {
     implicitWidth: rowLayout.implicitWidth
     implicitHeight: rowLayout.implicitHeight
 
+    // The panel hangs under this capsule; keep the anchor current even when the
+    // panel is opened from IPC rather than by a click here.
+    function updateAnchor() {
+        GlobalStates.mediaControlsAnchorX = root.mapToItem(null, 0, 0).x;
+    }
+    Component.onCompleted: updateAnchor()
+    // At completion the bar layout is not measured yet and mapToItem returns 0.
+    Timer {
+        interval: 500
+        running: true
+        onTriggered: root.updateAnchor()
+    }
+
     RowLayout {
         id: rowLayout
         anchors.centerIn: parent
@@ -88,7 +101,7 @@ Item {
             else if (event.button === Qt.MiddleButton)
                 root.player?.togglePlaying();
             else {
-                GlobalStates.mediaControlsAnchorX = root.mapToItem(null, root.width, 0).x;
+                GlobalStates.mediaControlsAnchorX = root.mapToItem(null, 0, 0).x;
                 GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
             }
         }
