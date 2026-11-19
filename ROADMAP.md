@@ -42,7 +42,7 @@ one runs.
 | phase | replaces | size | risk |
 |-------|----------|------|------|
 | 1 | `colors/switchwall.sh` orchestration (matugen calls, monitors, video wallpaper, state files, thumbnails) | 514 lines bash | medium: touches the theme, but only through the same commands |
-| 2 | `colors/generate_colors_material.py` + `colors/scheme_for_image.py` (Material You scheme from an image) | 251 lines Python | high: needs HCT colour science to match matugen exactly, and it is what removes `materialyoucolor` from the venv |
+| 2 | `colors/generate_colors_material.py` (Material You scheme from a colour or image) | 251 lines Python | high: needs HCT colour science to match matugen exactly, and it is what removes `materialyoucolor` from the venv. Split: 2a is the `--color` path, 2b the `--path` (image) path. |
 | 3 | `images/find_regions.py` (screenshot region detection) | 120 lines Python | low: pure function, testable with fixtures |
 | 4 | `thumbnails/thumbgen.py` (GNOME thumbnailer wrapper) | 122 lines Python | low, but it depends on `gi`, not on the venv |
 | 5 | small scripts: `record.sh`, `prune.sh`, `keyring/*`, `applycolor.sh` | ~260 lines | low, one at a time |
@@ -54,6 +54,15 @@ for good: kitty runs only Python kittens.
 Acceptance for every phase: run the old and the new implementation over the same inputs in a sandbox
 with `HOME` and `XDG_*` redirected to a temporary tree, then diff the results. Nothing ships on a
 prose description of "it should work".
+
+## Kitty gets its colours from two places
+
+`~/.config/kitty/colors.conf` is a matugen template: muted colours derived from the wallpaper.
+`~/.local/state/quickshell/user/generated/terminal/kitty-theme.conf` is produced by
+`generate_colors_material.py` plus `applycolor.sh`: vivid colours harmonised from a catppuccin base,
+pushed into running instances with `kitten @ set-colors`. The second wins at runtime, so the terminal
+does not follow the wallpaper palette. That is a design choice nobody has confirmed; phase 2a does
+not change it, it only replaces the implementation.
 
 ## Open
 
