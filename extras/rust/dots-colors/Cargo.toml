@@ -1,0 +1,8 @@
+[package]
+name = "dots-colors"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 2a Rust replacement for generate_colors_material.py, --color path"
+
+[dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
