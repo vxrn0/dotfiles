@@ -42,7 +42,8 @@ one runs.
 | phase | replaces | size | risk |
 |-------|----------|------|------|
 | 1 | `colors/switchwall.sh` orchestration (matugen calls, monitors, video wallpaper, state files, thumbnails) | 514 lines bash | medium: touches the theme, but only through the same commands |
-| 2 | `colors/generate_colors_material.py` (Material You scheme from a colour or image) | 251 lines Python | high: needs HCT colour science to match matugen exactly, and it is what removes `materialyoucolor` from the venv. Split: 2a is the `--color` path, 2b the `--path` (image) path. |
+| 2a | `generate_colors_material.py --color` (Material You scheme from a colour) | done | 612/612 cases match the Python reference byte for byte. 0.9 ms against 90 ms. |
+| 2b | `generate_colors_material.py --path` (scheme from an image) | Celebi quantisation | still Python; this is what still needs the venv. |
 | 3 | `images/find_regions.py` (screenshot region detection) | 120 lines Python | low: pure function, testable with fixtures |
 | 4 | `thumbnails/thumbgen.py` (GNOME thumbnailer wrapper) | 122 lines Python | low, but it depends on `gi`, not on the venv |
 | 5 | small scripts: `record.sh`, `prune.sh`, `keyring/*`, `applycolor.sh` | ~260 lines | low, one at a time |
