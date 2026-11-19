@@ -2,7 +2,9 @@
 name = "dots-colors"
 version = "0.1.0"
 edition = "2021"
-description = "Phase 2a Rust replacement for generate_colors_material.py, --color path"
+description = "Phase 2 Rust replacement for generate_colors_material.py and scheme_for_image.py"
 
 [dependencies]
 serde_json = { version = "1", features = ["preserve_order"] }
+image = { version = "0.25.10", default-features = false, features = ["png", "gif"] }
+libc = "0.2"

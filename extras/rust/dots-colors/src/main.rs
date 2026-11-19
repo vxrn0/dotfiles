@@ -1,14 +1,19 @@
+mod area;
 mod cam16;
 mod color;
 mod contrast;
+mod decode;
 mod dynamic;
 mod hct;
 mod palette;
+mod quantize;
+mod resize;
 mod scheme;
+mod scheme_for_image;
 mod temperature;
 mod terminal;
 
-use color::{argb_hex, display_color, hex_to_argb};
+use color::{argb_hex, display_color, hex_to_argb, py_round};
 use dynamic::ROLES;
 use hct::Hct;
 use scheme::DynamicScheme;
@@ -19,6 +24,7 @@ use std::process::exit;
 struct Args {
     path: Option<String>,
     color: Option<String>,
+    size: i64,
     mode: Mode,
     scheme: String,
     transparency: Transparency,
@@ -27,6 +33,8 @@ struct Args {
     harmonize_threshold: f64,
     term_fg_boost: f64,
     blend_bg_fg: bool,
+    cache: Option<String>,
+    smart: bool,
     debug: bool,
 }
 
@@ -51,6 +59,7 @@ fn parse_args(argv: Vec<String>) -> Result<Action, String> {
     let mut args = Args {
         path: None,
         color: None,
+        size: 128,
         mode: Mode::Dark,
         scheme: "vibrant".to_string(),
         transparency: Transparency::Opaque,
@@ -59,6 +68,8 @@ fn parse_args(argv: Vec<String>) -> Result<Action, String> {
         harmonize_threshold: 100.0,
         term_fg_boost: 0.35,
         blend_bg_fg: false,
+        cache: None,
+        smart: false,
         debug: false,
     };
 
@@ -94,12 +105,9 @@ fn parse_args(argv: Vec<String>) -> Result<Action, String> {
             "--color" => args.color = Some(take_value("--color")?),
             "--scheme" => args.scheme = take_value("--scheme")?,
             "--termscheme" => args.termscheme = Some(take_value("--termscheme")?),
-            "--cache" => {
-                // Only the image path writes the cache in the reference driver.
-                let _ = take_value("--cache")?;
-            }
+            "--cache" => args.cache = Some(take_value("--cache")?),
             "--size" => {
-                take_value("--size")?
+                args.size = take_value("--size")?
                     .parse::<i64>()
                     .map_err(|_| "argument --size: invalid int value".to_string())?;
             }
@@ -146,7 +154,7 @@ fn parse_args(argv: Vec<String>) -> Result<Action, String> {
                 if inline_value.is_some() {
                     return Err("argument --smart: ignored explicit argument".to_string());
                 }
-                // Smart only inspects an image, so it is a no-op with --color.
+                args.smart = true;
             }
             "--blend_bg_fg" => {
                 if inline_value.is_some() {
@@ -240,21 +248,76 @@ fn load_term_scheme(path: &str, dark: bool) -> Result<Vec<(String, String)>, Str
     Ok(entries)
 }
 
-fn run(args: Args) -> Result<(), String> {
-    if args.path.is_some() {
-        return Err(
-            "--path is not implemented yet (phase 2b); only --color is supported".to_string(),
-        );
-    }
-    let color_text = args
-        .color
-        .as_deref()
-        .ok_or_else(|| "one of --color or --path is required".to_string())?;
+fn calculate_optimal_size(width: usize, height: usize, bitmap_size: i64) -> (usize, usize) {
+    let image_area = width as i128 * height as i128;
+    let bitmap_area = bitmap_size as i128 * bitmap_size as i128;
+    let scale = if image_area > bitmap_area {
+        (bitmap_area as f64 / image_area as f64).sqrt()
+    } else {
+        1.0
+    };
+    let new_width = py_round(width as f64 * scale) as i64;
+    let new_height = py_round(height as f64 * scale) as i64;
+    (new_width.max(1) as usize, new_height.max(1) as usize)
+}
 
+fn image_argb(
+    path: &str,
+    size: i64,
+    smart: bool,
+    scheme: &mut String,
+) -> Result<(u32, Hct, (usize, usize, usize, usize)), String> {
+    let image = decode::decode(path)?;
+    let (width, height) = (image.width, image.height);
+    let (new_width, new_height) = calculate_optimal_size(width, height, size);
+    let rgb = if new_width < width || new_height < height {
+        decode::resize(
+            &image.rgb,
+            image.alpha.as_deref(),
+            width,
+            height,
+            new_width,
+            new_height,
+        )
+    } else {
+        image.rgb.clone()
+    };
+
+    let pixels: Vec<u32> = rgb
+        .chunks_exact(3)
+        .map(|pixel| {
+            0xFF000000 | (pixel[0] as u32) << 16 | (pixel[1] as u32) << 8 | pixel[2] as u32
+        })
+        .collect();
+    let colors = quantize::quantize_celebi(&pixels, 128);
+    let scored = quantize::score(&colors);
+    let argb = *scored.first().unwrap_or(&0xFF4285F4);
+    let hct = Hct::from_int(argb);
+    if smart && hct.chroma < 20.0 {
+        *scheme = "neutral".to_string();
+    }
+    Ok((argb, hct, (width, height, new_width, new_height)))
+}
+
+fn run(mut args: Args) -> Result<(), String> {
     let dark = args.mode == Mode::Dark;
     let transparent = args.transparency == Transparency::Transparent;
-    let argb = hex_to_argb(color_text)?;
-    let hct = Hct::from_int(argb);
+
+    let (argb, hct, image_size) = if let Some(path) = &args.path {
+        let (argb, hct, sizes) = image_argb(path, args.size, args.smart, &mut args.scheme)?;
+        if let Some(cache) = &args.cache {
+            fs::write(cache, argb_hex(argb))
+                .map_err(|error| format!("cannot write {cache}: {error}"))?;
+        }
+        (argb, hct, Some(sizes))
+    } else {
+        let color_text = args
+            .color
+            .as_deref()
+            .ok_or_else(|| "one of --color or --path is required".to_string())?;
+        let argb = hex_to_argb(color_text)?;
+        (argb, Hct::from_int(argb), None)
+    };
     let scheme = DynamicScheme::for_scheme(&args.scheme, hct, dark, 0.0)?;
 
     let material: Vec<(&str, u32)> = ROLES
@@ -325,6 +388,12 @@ fn run(args: Args) -> Result<(), String> {
     }
 
     println!();
+    if let Some((width, height, new_width, new_height)) = image_size {
+        println!("--------------Image properties-----------------");
+        println!("Image size: {width} x {height}");
+        println!("Resized image: {new_width} x {new_height}");
+        println!();
+    }
     println!("---------------Selected color------------------");
     println!("Dark mode: {}", if dark { "True" } else { "False" });
     println!("Scheme: {}", args.scheme);
@@ -373,8 +442,59 @@ fn term_hex(value: &TermValue) -> String {
     }
 }
 
+fn scheme_for_image_main(argv: Vec<String>) -> ! {
+    let mut colorfulness_mode = false;
+    let mut rest = Vec::new();
+    let mut removed = false;
+    for arg in argv {
+        if !colorfulness_mode && !removed && arg == "--colorfulness" {
+            colorfulness_mode = true;
+            removed = true;
+        } else {
+            rest.push(arg);
+        }
+    }
+
+    let Some(path) = rest.first() else {
+        println!("scheme-tonal-spot");
+        exit(1);
+    };
+    let decoded = match decode::decode_first(path) {
+        Ok(image) => image,
+        Err(_) => {
+            println!("scheme-tonal-spot");
+            exit(1);
+        }
+    };
+
+    let (width, height) = (decoded.width, decoded.height);
+    let rgb = if width.max(height) > 128 {
+        let scale = 128.0 / width.max(height) as f64;
+        let new_width = (width as f64 * scale) as usize;
+        let new_height = (height as f64 * scale) as usize;
+        if new_width == 0 || new_height == 0 {
+            eprintln!("dots-colors: cannot resize {width}x{height} for colorfulness");
+            exit(1);
+        }
+        area::area_resize(&decoded.rgb, width, height, new_width, new_height)
+    } else {
+        decoded.rgb
+    };
+
+    let value = scheme_for_image::colorfulness(&rgb);
+    if colorfulness_mode {
+        println!("{}", scheme_for_image::python_float(value));
+    } else {
+        println!("{}", scheme_for_image::pick_scheme(value));
+    }
+    exit(0);
+}
+
 fn main() {
     let argv: Vec<String> = env::args().skip(1).collect();
+    if argv.first().map(String::as_str) == Some("scheme-for-image") {
+        scheme_for_image_main(argv[1..].to_vec());
+    }
     match parse_args(argv) {
         Ok(Action::Help) => print_help(),
         Ok(Action::Run(args)) => {
