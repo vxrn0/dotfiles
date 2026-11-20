@@ -169,8 +169,8 @@ run_case fullscreen-sound none 0 "" --fullscreen --sound
 run_case sound-fallback none 0 "export DOTS_NO_DEFAULT_SINK=1" --fullscreen --sound
 run_case sound-nothing none 0 "export DOTS_NO_DEFAULT_SINK=1 DOTS_NO_SOURCES=1" --fullscreen --sound
 run_case region none 0 "" --region "10,20 300x200"
-run_case slurp none 0 "" 
-run_case slurp-cancel none 0 "export DOTS_SLURP_FAIL=1" 
+run_case slurp none 0 ""
+run_case slurp-cancel none 0 "export DOTS_SLURP_FAIL=1"
 run_case stop none 1 "" --fullscreen
 run_case custom-path custom 0 "" --fullscreen
 run_case missing-config none 0 "" --fullscreen
