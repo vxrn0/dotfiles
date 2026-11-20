@@ -36,7 +36,10 @@ like the shell; a parse error disables it and prints the error.
 bound to a fake directory, so no escape sequence reaches a real terminal. It
 stubs `pgrep`, `kitten` and `pidof`, redirects every XDG path, and compares the
 state tree, fake terminal contents, stdout, exit status, command logs and the
-`SIGUSR1` outcome:
+`SIGUSR1` outcome. The reference script and its two templates are vendored in
+`tests/reference` because the live `applycolor.sh` is being changed in another
+zone while this replacement is developed; the snapshot is the version this
+crate replaced.
 
 ```sh
 cargo build --release --offline

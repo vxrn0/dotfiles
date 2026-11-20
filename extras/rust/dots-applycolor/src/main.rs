@@ -224,7 +224,11 @@ fn apply_kitty(paths: &Paths, generated: &Path, names: &[String], values: &[Stri
         }
     }
     if !pushed {
-        match Command::new("pidof").arg("kitty").output() {
+        match Command::new("pidof")
+            .arg("kitty")
+            .stderr(Stdio::inherit())
+            .output()
+        {
             Ok(output) => {
                 let pids = String::from_utf8_lossy(&output.stdout)
                     .split_whitespace()

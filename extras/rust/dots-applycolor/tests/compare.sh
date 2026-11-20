@@ -5,11 +5,11 @@ set -u
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../../../.." && pwd)
-reference="$repo/.config/quickshell/dotfiles/scripts/colors/applycolor.sh"
+reference_source="$here/reference"
 binary="${DOTS_APPLYCOLOR:-$here/../target/release/dots-applycolor}"
 [ -x "$binary" ] || binary="$here/../target/debug/dots-applycolor"
 [ -x "$binary" ] || { echo "compare: no binary at $binary" >&2; exit 2; }
-[ -f "$reference" ] || { echo "compare: missing $reference" >&2; exit 2; }
+[ -f "$reference_source/applycolor.sh" ] || { echo "compare: missing vendored reference" >&2; exit 2; }
 command -v bwrap >/dev/null || { echo "compare: bwrap is required" >&2; exit 2; }
 
 work=$(mktemp -d /tmp/opencode/dots-applycolor-compare.XXXXXX)
@@ -56,8 +56,13 @@ seed() {
         "$root/cache" "$root/run" "$root/log" "$root/bin" \
         "$root/pts"
     make_fakes "$root"
-    cp -a "$repo/.config/quickshell/dotfiles/scripts/colors" \
-        "$root/config/quickshell/dotfiles/scripts/colors"
+    mkdir -p "$root/config/quickshell/dotfiles/scripts/colors/terminal"
+    cp "$reference_source/applycolor.sh" \
+        "$root/config/quickshell/dotfiles/scripts/colors/applycolor.sh"
+    cp "$reference_source/terminal/kitty-theme.conf" \
+        "$root/config/quickshell/dotfiles/scripts/colors/terminal/kitty-theme.conf"
+    cp "$reference_source/terminal/sequences.txt" \
+        "$root/config/quickshell/dotfiles/scripts/colors/terminal/sequences.txt"
     [ "$kitty_template" = 0 ] && rm -f \
         "$root/config/quickshell/dotfiles/scripts/colors/terminal/kitty-theme.conf"
     [ "$sequences_template" = 0 ] && rm -f \
