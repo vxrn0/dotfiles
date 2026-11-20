@@ -1,0 +1,9 @@
+[package]
+name = "dots-regions"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 3 Rust replacement for find_regions.py"
+
+[dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg"] }
