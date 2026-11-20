@@ -1,0 +1,20 @@
+[package]
+name = "dots-keyring"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 5c Rust replacement for keyring/unlock.sh and is_unlocked.sh"
+
+[lib]
+name = "dots_keyring"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dots-keyring-is-unlocked"
+path = "src/bin/is_unlocked.rs"
+
+[[bin]]
+name = "dots-keyring-unlock"
+path = "src/bin/unlock.rs"
+
+[dependencies]
+libc = "0.2"
