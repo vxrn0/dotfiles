@@ -41,13 +41,15 @@ one runs.
 
 | phase | replaces | size | risk |
 |-------|----------|------|------|
-| 1 | `colors/switchwall.sh` orchestration (matugen calls, monitors, video wallpaper, state files, thumbnails) | 514 lines bash | medium: touches the theme, but only through the same commands |
+| 1 | `colors/switchwall.sh` orchestration (matugen calls, monitors, video wallpaper, state files, thumbnails) | done | 612 lines Rust, 715 KB binary, 18 tests. Sandbox diff against the bash original is empty for an image, a colour and a video. Fixes an infinite loop on `--mode` with no value and a case-sensitive video check; errors now abort instead of being swallowed. |
 | 2a | `generate_colors_material.py --color` (Material You scheme from a colour) | done | 612/612 cases match the Python reference byte for byte. 0.9 ms against 90 ms. |
 | 2b | `generate_colors_material.py --path` and `scheme_for_image.py` (scheme from an image) | done | 705/705 cases match byte for byte, including 8 real photos, greyscale, 1x1, GIF and a non-image. Links `libturbojpeg` because zune-jpeg decodes up to 8 levels off Pillow, which moves the seed. |
 | 2c | switch `switchwall.sh` and `dots-theme` over to `dots-colors` | outside this zone | the venv can only go after this. |
 | 3 | `images/find_regions.py` (screenshot region detection) | done | 314 lines Rust, 33-54 ms at 1080p. **No reference existed**: the script needs OpenCV, absent from the venv, so region suggestions had been failing silently. Built rather than ported and verified structurally: 5 synthetic rectangles at IoU >= 0.7, blank image returns empty, bounds and limits on real photos. |
 | 4 | `thumbnails/thumbgen.py` (GNOME thumbnailer wrapper) | 122 lines Python | low, but it depends on `gi`, not on the venv |
-| 5 | small scripts: `record.sh`, `prune.sh`, `keyring/*`, `applycolor.sh` | ~260 lines | low, one at a time |
+| 5a | `thumbnails/generate-thumbnails-magick.sh` | 128 lines bash | low: ImageMagick calls plus Freedesktop thumbnail naming |
+| 5b | `hyprland/hyprconfigurator.py` | 137 lines Python | low: rewrites Hyprland config values, text only |
+| 5c | `record.sh`, `prune.sh`, `keyring/unlock.sh`, `applycolor.sh`, `recognize-music.sh`, `material-code-set-color.sh` | 301 lines | low, one at a time |
 
 ## Two features that were dead before the rewrite started
 
