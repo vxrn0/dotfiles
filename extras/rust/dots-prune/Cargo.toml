@@ -1,0 +1,9 @@
+[package]
+name = "dots-prune"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 5c Rust replacement for clipboard/prune.sh"
+
+[[bin]]
+name = "dots-prune"
+path = "src/main.rs"
