@@ -46,8 +46,7 @@ seed() {
     local root="$1"
     local config="$2"
     local scss="$3"
-    local kitty_template="$4"
-    local sequences_template="$5"
+    local sequences_template="$4"
     mkdir -p \
         "$root/home/.config" \
         "$root/config/dotfiles" \
@@ -59,12 +58,8 @@ seed() {
     mkdir -p "$root/config/quickshell/dotfiles/scripts/colors/terminal"
     cp "$reference_source/applycolor.sh" \
         "$root/config/quickshell/dotfiles/scripts/colors/applycolor.sh"
-    cp "$reference_source/terminal/kitty-theme.conf" \
-        "$root/config/quickshell/dotfiles/scripts/colors/terminal/kitty-theme.conf"
     cp "$reference_source/terminal/sequences.txt" \
         "$root/config/quickshell/dotfiles/scripts/colors/terminal/sequences.txt"
-    [ "$kitty_template" = 0 ] && rm -f \
-        "$root/config/quickshell/dotfiles/scripts/colors/terminal/kitty-theme.conf"
     [ "$sequences_template" = 0 ] && rm -f \
         "$root/config/quickshell/dotfiles/scripts/colors/terminal/sequences.txt"
     printf '%b' "$scss" > "$root/state/quickshell/user/generated/material_colors.scss"
@@ -80,15 +75,6 @@ seed() {
     printf 'terminal 0\n' > "$root/pts/0"
     printf 'terminal 1\n' > "$root/pts/1"
     printf 'not a terminal\n' > "$root/pts/notapts"
-    python3 - "$root/run/kitty.sock" "$root/run/kitty.sock-1" <<'PY'
-import socket
-import sys
-for path in sys.argv[1:]:
-    sock = socket.socket(socket.AF_UNIX)
-    sock.bind(path)
-    sock.close()
-PY
-    : > "$root/run/kitty.sock-regular"
 }
 
 run_one() {
@@ -132,18 +118,17 @@ run_case() {
     local name="$1"
     local config="$2"
     local scss="$3"
-    local kitty_template="$4"
-    local sequences_template="$5"
-    local envs="$6"
+    local sequences_template="$4"
+    local envs="$5"
     cases=$((cases + 1))
     local ref="$work/$name/reference"
     local rust="$work/$name/rust"
-    seed "$ref" "$config" "$scss" "$kitty_template" "$sequences_template"
-    seed "$rust" "$config" "$scss" "$kitty_template" "$sequences_template"
+    seed "$ref" "$config" "$scss" "$sequences_template"
+    seed "$rust" "$config" "$scss" "$sequences_template"
 
     set +e
     (
-        export DOTS_KITTY=0 DOTS_KITTEN_EXIT=0 DOTS_SLEEP=0 DOTS_PIDOF=""
+        export DOTS_SLEEP=0 DOTS_PIDOF=""
         eval "$envs"
         run_one "$ref" bash "$ref/config/quickshell/dotfiles/scripts/colors/applycolor.sh"
         run_one "$rust" "$binary"
@@ -177,7 +162,7 @@ run_case() {
         return
     fi
     local log
-    for log in pgrep kitten pidof; do
+    for log in pgrep pidof; do
         [ -f "$ref/log/$log.log" ] || : > "$ref/log/$log.log"
         [ -f "$rust/log/$log.log" ] || : > "$rust/log/$log.log"
         sed "s|$ref|ROOT|g" "$ref/log/$log.log" | sort > "$ref/log/$log.norm"
@@ -191,17 +176,13 @@ run_case() {
 }
 
 scss='$background: #111318;\n$term0: #1e1e2e;\n$term7: #cdd6f4;\n$primary: #89b4fa;\n$alpha: #123456;\n'
-run_case kitty "true" "$scss" 1 1 "export DOTS_KITTY=1"
-run_case no-kitty "true" "$scss" 1 1 ""
-run_case disabled "false" "$scss" 1 1 ""
-run_case missing-config "" "$scss" 1 1 ""
-run_case string-true "string" "$scss" 1 1 ""
-run_case invalid-config "invalid" "$scss" 1 1 ""
-run_case no-kitty-template "true" "$scss" 0 1 "export DOTS_KITTY=1"
-run_case no-templates "true" "$scss" 0 0 "export DOTS_KITTY=1"
-run_case kitten-fails "true" "$scss" 1 1 "export DOTS_KITTY=1 DOTS_KITTEN_EXIT=1"
-run_case signal-fallback "true" "$scss" 1 1 "export DOTS_KITTY=1 DOTS_KITTEN_EXIT=1 DOTS_SLEEP=1"
-run_case no-scss "true" "" 1 1 "export DOTS_KITTY=1"
+run_case enabled "true" "$scss" 1 ""
+run_case disabled "false" "$scss" 1 ""
+run_case missing-config "" "$scss" 1 ""
+run_case string-true "string" "$scss" 1 ""
+run_case invalid-config "invalid" "$scss" 1 ""
+run_case no-templates "true" "$scss" 0 ""
+run_case no-scss "true" "" 1 ""
 
 echo "compare: $cases cases, $matched matched, $failed failed"
 [ "$cases" -gt 0 ] && [ "$failed" -eq 0 ]

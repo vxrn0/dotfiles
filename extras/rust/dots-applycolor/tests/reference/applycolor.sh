@@ -27,39 +27,6 @@ IFS=$'\n'
 colorlist=($colornames)     # Array of color names
 colorvalues=($colorstrings) # Array of color values
 
-apply_kitty() {  
-  # Check if terminal escape sequence template exists
-  if [ ! -f "$SCRIPT_DIR/terminal/kitty-theme.conf" ]; then
-    echo "Template file not found for Kitty theme. Skipping that."
-    return
-  fi
-  # Copy template
-  mkdir -p "$STATE_DIR"/user/generated/terminal
-  cp "$SCRIPT_DIR/terminal/kitty-theme.conf" "$STATE_DIR"/user/generated/terminal/kitty-theme.conf
-  # Apply colors
-  for i in "${!colorlist[@]}"; do
-    sed -i "s/${colorlist[$i]} #/${colorvalues[$i]#\#}/g" "$STATE_DIR"/user/generated/terminal/kitty-theme.conf
-  done
-
-  # Push colors directly via remote control when available, so kitten themes and
-  # Kitty's OS-appearance auto-theme files cannot override the wallpaper palette
-  # on reload (#3550). Fall back to SIGUSR1 for setups without remote control.
-  if ! pgrep -f kitty >/dev/null; then
-    return
-  fi
-  local pushed=0
-  local sockdir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-  for sock in "$sockdir"/kitty.sock*; do
-    [ -S "$sock" ] || continue
-    if kitten @ --to "unix:$sock" set-colors --all --configured "$STATE_DIR/user/generated/terminal/kitty-theme.conf" 2>/dev/null; then
-      pushed=1
-    fi
-  done
-  if [ "$pushed" -eq 0 ]; then
-    kill -SIGUSR1 $(pidof kitty) 2>/dev/null || true
-  fi
-}
-
 apply_anyterm() {
   # Check if terminal escape sequence template exists
   if [ ! -f "$SCRIPT_DIR/terminal/sequences.txt" ]; then
@@ -87,7 +54,6 @@ apply_anyterm() {
 
 apply_term() {
   apply_anyterm &
-  apply_kitty &
 }
 
 # Check if terminal theming is enabled in config

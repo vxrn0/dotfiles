@@ -1,9 +1,7 @@
 use serde_json::Value;
 use std::env;
 use std::fs;
-use std::os::unix::fs::FileTypeExt;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 
 const TERM_ALPHA: &str = "100";
 
@@ -11,7 +9,6 @@ struct Paths {
     config_home: PathBuf,
     config: PathBuf,
     state: PathBuf,
-    runtime: PathBuf,
     colors: PathBuf,
 }
 
@@ -26,17 +23,12 @@ impl Paths {
             .map(PathBuf::from)
             .filter(|path| !path.as_os_str().is_empty())
             .unwrap_or_else(|| home.join(".local/state"));
-        let runtime = env::var_os("XDG_RUNTIME_DIR")
-            .map(PathBuf::from)
-            .filter(|path| !path.as_os_str().is_empty())
-            .unwrap_or_else(|| PathBuf::from(format!("/run/user/{}", unsafe { libc::getuid() })));
         let config = config_home.join("quickshell/dotfiles");
         Self {
             colors: config.join("scripts/colors"),
             config_home,
             config,
             state: state_home.join("quickshell"),
-            runtime,
         }
     }
 }
@@ -98,7 +90,6 @@ fn run() -> i32 {
     };
     if enabled {
         apply_anyterm(&paths, &generated, &names, &values);
-        apply_kitty(&paths, &generated, &names, &values);
     }
     0
 }
@@ -167,85 +158,6 @@ fn write_themed(
     }
     fs::write(destination, result)
         .map_err(|error| format!("cannot write {}: {error}", destination.display()))
-}
-
-fn apply_kitty(paths: &Paths, generated: &Path, names: &[String], values: &[String]) {
-    let template = paths.colors.join("terminal/kitty-theme.conf");
-    if !template.is_file() {
-        println!("Template file not found for Kitty theme. Skipping that.");
-        return;
-    }
-    let terminal = generated.join("terminal");
-    let _ = fs::create_dir_all(&terminal);
-    let destination = terminal.join("kitty-theme.conf");
-    if let Err(error) = write_themed(&template, &destination, names, values, false) {
-        eprintln!("dots-applycolor: {error}");
-        return;
-    }
-
-    let running = Command::new("pgrep")
-        .args(["-f", "kitty"])
-        .stdout(Stdio::null())
-        .status()
-        .map(|status| status.success())
-        .unwrap_or(false);
-    if !running {
-        return;
-    }
-
-    let mut pushed = false;
-    if let Ok(entries) = fs::read_dir(&paths.runtime) {
-        let mut sockets = entries
-            .flatten()
-            .map(|entry| entry.path())
-            .filter(|path| {
-                path.file_name()
-                    .and_then(|name| name.to_str())
-                    .map(|name| name.starts_with("kitty.sock"))
-                    .unwrap_or(false)
-                    && path
-                        .metadata()
-                        .map(|meta| meta.file_type().is_socket())
-                        .unwrap_or(false)
-            })
-            .collect::<Vec<_>>();
-        sockets.sort();
-        for socket in sockets {
-            let status = Command::new("kitten")
-                .arg("@")
-                .arg("--to")
-                .arg(format!("unix:{}", socket.display()))
-                .args(["set-colors", "--all", "--configured"])
-                .arg(&destination)
-                .status();
-            if status.map(|status| status.success()).unwrap_or(false) {
-                pushed = true;
-            }
-        }
-    }
-    if !pushed {
-        match Command::new("pidof")
-            .arg("kitty")
-            .stderr(Stdio::inherit())
-            .output()
-        {
-            Ok(output) => {
-                let pids = String::from_utf8_lossy(&output.stdout)
-                    .split_whitespace()
-                    .filter_map(|value| value.parse::<i32>().ok())
-                    .collect::<Vec<_>>();
-                for pid in pids {
-                    if unsafe { libc::kill(pid, libc::SIGUSR1) } != 0 {
-                        eprintln!(
-                            "dots-applycolor: cannot signal kitty pid {pid}: {}",
-                            std::io::Error::last_os_error()
-                        );
-                    }
-                }
-            }
-            Err(error) => eprintln!("dots-applycolor: cannot run pidof: {error}"),
-        }
-    }
 }
 
 fn apply_anyterm(paths: &Paths, generated: &Path, names: &[String], values: &[String]) {

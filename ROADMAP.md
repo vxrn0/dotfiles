@@ -45,10 +45,10 @@ one runs.
 | 2b | `generate_colors_material.py --path` and `scheme_for_image.py` (scheme from an image) | done | 705/705 cases match byte for byte, including 8 real photos, greyscale, 1x1, GIF and a non-image. Links `libturbojpeg` because zune-jpeg decodes up to 8 levels off Pillow, which moves the seed. |
 | 2c | switch `switchwall.sh` and `dots-theme` over to `dots-colors` | outside this zone | the venv can only go after this. |
 | 3 | `images/find_regions.py` (screenshot region detection) | done | 314 lines Rust, 33-54 ms at 1080p. **No reference existed**: the script needs OpenCV, absent from the venv, so region suggestions had been failing silently. Built rather than ported and verified structurally: 5 synthetic rectangles at IoU >= 0.7, blank image returns empty, bounds and limits on real photos. |
-| 4 | `thumbnails/thumbgen.py` (GNOME thumbnailer wrapper) | 122 lines Python | low, but it depends on `gi`, not on the venv |
-| 5a | `thumbnails/generate-thumbnails-magick.sh` | 128 lines bash | low: ImageMagick calls plus Freedesktop thumbnail naming |
-| 5b | `hyprland/hyprconfigurator.py` | 137 lines Python | low: rewrites Hyprland config values, text only |
-| 5c | `record.sh`, `prune.sh`, `keyring/unlock.sh`, `applycolor.sh`, `recognize-music.sh`, `material-code-set-color.sh` | 301 lines | low, one at a time |
+| 4 | `thumbnails/thumbgen.py` (GNOME thumbnailer wrapper) | done | 1529 lines Rust. Turned out not to be a separate job: QML calls it first and falls back to the magick script, so one binary serves both dialects. 15/15 cases. |
+| 5a | `thumbnails/generate-thumbnails-magick.sh` | done | same binary as 4 |
+| 5b | `hyprland/hyprconfigurator.py` | done | 337 lines Rust, 28/28 cases, including the Python's own line-regex limits, reproduced on purpose |
+| 5c | `record.sh`, `prune.sh`, `keyring/*`, `applycolor.sh`, `recognize-music.sh`, `material-code-set-color.sh` | done | six crates, 124/124 cases across them |
 
 ## Two features that were dead before the rewrite started
 
@@ -95,9 +95,10 @@ foot has no ligatures; `->` and `=>` render as two characters. That is the accep
 
 ## Open
 
-- Order of the Rust rewrite: theme driver first, then the colour science, then image work, then the small scripts.
 - Live typing on Wayland is documented as unverified on Hyprland; only KWin and Mutter were tried.
   If the preedit misbehaves, use Live text (a HUD beside the cursor) or plain paste.
+- Nothing in the shell calls the new binaries yet. That switch is phase 2c and it spans every caller in
+  `.config/quickshell` and `extras/mango`, which is another agent's zone.
 
 ## Notes on the model choice
 
