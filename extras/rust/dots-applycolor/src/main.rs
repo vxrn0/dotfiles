@@ -224,16 +224,22 @@ fn apply_kitty(paths: &Paths, generated: &Path, names: &[String], values: &[Stri
         }
     }
     if !pushed {
-        if let Ok(output) = Command::new("pidof").arg("kitty").output() {
-            let pids = String::from_utf8_lossy(&output.stdout)
-                .split_whitespace()
-                .filter_map(|value| value.parse::<i32>().ok())
-                .collect::<Vec<_>>();
-            for pid in pids {
-                unsafe {
-                    libc::kill(pid, libc::SIGUSR1);
+        match Command::new("pidof").arg("kitty").output() {
+            Ok(output) => {
+                let pids = String::from_utf8_lossy(&output.stdout)
+                    .split_whitespace()
+                    .filter_map(|value| value.parse::<i32>().ok())
+                    .collect::<Vec<_>>();
+                for pid in pids {
+                    if unsafe { libc::kill(pid, libc::SIGUSR1) } != 0 {
+                        eprintln!(
+                            "dots-applycolor: cannot signal kitty pid {pid}: {}",
+                            std::io::Error::last_os_error()
+                        );
+                    }
                 }
             }
+            Err(error) => eprintln!("dots-applycolor: cannot run pidof: {error}"),
         }
     }
 }

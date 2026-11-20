@@ -60,5 +60,6 @@ and failing `kitten`, the `pidof` signal fallback, and a missing SCSS.
 - sed replacement text is literal. A value containing `&` or a backslash would
   follow sed's special replacement rules in the shell and is inserted as-is
   here. Generated values are hex colours.
-- A failing `pidof` or an empty pid list is silent. The shell's
-  `kill ... 2>/dev/null` was silent there too.
+- A failing `pidof` and a failed `kill` now print an error. The shell had
+  `kill ... 2>/dev/null`; the empty-pid case stays quiet because there is
+  nothing to signal.
