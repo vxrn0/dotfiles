@@ -1,0 +1,13 @@
+[package]
+name = "dots-applycolor"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 5c Rust replacement for colors/applycolor.sh"
+
+[[bin]]
+name = "dots-applycolor"
+path = "src/main.rs"
+
+[dependencies]
+libc = "0.2"
+serde_json = { version = "1", features = ["preserve_order"] }
