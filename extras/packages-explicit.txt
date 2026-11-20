@@ -86,7 +86,6 @@ plymouth
 python
 python-dotenv
 python-fastapi
-python-fonttools
 python-httptools
 python-matplotlib
 python-pillow

@@ -51,7 +51,6 @@ Every commit has the same author, so put the zone in the subject (`hypr:`, `pilo
 - The Codex CLI is the engine behind the Pilot panel; `scripts/ai/codex-run.py`
   translates its events. `monaco-editor` comes from `extras/install.sh`; the editor also needs
   `npm install -g monaco-editor`.
-- `extras/make-material-symbols-filled.py` bakes the filled icon weight; restart the shell after it.
 - `hyprland/scripts/build-dynamic-cursors.sh` rebuilds the cursor plugin.
   `hyprland/scripts/ensure-dynamic-cursors.sh` loads it at login and rebuilds it first when
   Hyprland was updated, because the ABI check rejects the old build.

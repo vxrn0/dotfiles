@@ -56,7 +56,7 @@ for f in \
     "$REPO/extras/dotfiles-config.json" \
     "$REPO/extras/install.sh" \
     "$REPO/.config/hypr/hyprland/scripts/build-dynamic-cursors.sh" \
-    "$REPO/extras/make-material-symbols-filled.py" \
+    "$REPO/extras/fonts/material-symbols-filled/MaterialSymbolsRoundedFilled.ttf" \
     "$REPO/extras/fonts/google-sans-flex" \
     "$REPO/extras/sddm/pixie/Main.qml" \
     "$REPO/extras/packages-explicit.txt" \
@@ -193,7 +193,9 @@ echo "previous config saved to $backup"
 say "fonts and login theme"
 mkdir -p "$HOME/.local/share/fonts"
 cp -a "$REPO/extras/fonts/google-sans-flex" "$HOME/.local/share/fonts/"
-"$REPO/extras/make-material-symbols-filled.py"
+mkdir -p "$HOME/.local/share/fonts/material-symbols-filled"
+cp "$REPO/extras/fonts/material-symbols-filled/MaterialSymbolsRoundedFilled.ttf" \
+   "$HOME/.local/share/fonts/material-symbols-filled/"
 fc-cache -f >/dev/null
 sudo cp -a "$REPO/extras/sddm/pixie" /usr/share/sddm/themes/
 sudo mkdir -p /etc/sddm.conf.d
