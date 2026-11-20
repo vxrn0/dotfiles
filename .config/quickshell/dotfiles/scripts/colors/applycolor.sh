@@ -27,6 +27,24 @@ IFS=$'\n'
 colorlist=($colornames)     # Array of color names
 colorvalues=($colorstrings) # Array of color values
 
+apply_foot() {
+  local template="$SCRIPT_DIR/terminal/foot.ini.template"
+  local output="$XDG_CONFIG_HOME/foot/colors.ini"
+  if [ ! -f "$template" ]; then
+    echo "Template file not found for foot. Skipping that."
+    return
+  fi
+  mkdir -p "$(dirname "$output")"
+  cp "$template" "$output.tmp"
+  local i name value
+  for i in "${!colorlist[@]}"; do
+    name="${colorlist[$i]#\$}"
+    value="${colorvalues[$i]#\#}"
+    sed -i "s/\$$name /$value /g; s/\$$name$/$value/g" "$output.tmp"
+  done
+  mv "$output.tmp" "$output"
+}
+
 apply_anyterm() {
   # Check if terminal escape sequence template exists
   if [ ! -f "$SCRIPT_DIR/terminal/sequences.txt" ]; then
@@ -54,6 +72,7 @@ apply_anyterm() {
 
 apply_term() {
   apply_anyterm &
+  apply_foot &
 }
 
 # Check if terminal theming is enabled in config

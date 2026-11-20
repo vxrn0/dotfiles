@@ -184,6 +184,8 @@ done
 rsync -a "$REPO/.config/" "$HOME/.config/"
 # foot's include directive needs an absolute path, so the shipped file carries a placeholder
 sed -i "s|@HOME@|$HOME|g" "$HOME/.config/foot/foot.ini"
+# foot colours are rendered from material_colors.scss on the first wallpaper change; until then the
+# committed seed in .config/foot/colors.ini is what foot reads
 rsync -a "$REPO/.local/" "$HOME/.local/"
 if [ ! -f "$HOME/.config/dotfiles/config.json" ] && [ -f "$REPO/extras/dotfiles-config.json" ]; then
     mkdir -p "$HOME/.config/dotfiles"

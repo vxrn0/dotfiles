@@ -83,13 +83,17 @@ input must exit non-zero; a skipped axis is not a pass.
 Kitty was replaced because it is the only thing in the repo that needed Python, and it carried 80 MB
 of dependencies. foot is 812 KB, has no IPC and no Python.
 
-Live recolouring still works: `applycolor.sh` writes OSC 4/10/11 escape sequences to every
-`/dev/pts/*`, and foot implements those (OSC 4 palette, OSC 10 foreground, OSC 11 background,
-OSC 104 reset). The kitty-specific socket path was removed with the terminal.
+Colours come from `material_colors.scss`, the same source the kitty theme used, so the palette is the
+vivid one and not the muted tonal scheme matugen derives from the wallpaper. `applycolor.sh` renders
+`terminal/foot.ini.template` into `~/.config/foot/colors.ini` and pushes OSC 4/10/11 to every
+`/dev/pts/*` for live recolouring. matugen no longer writes terminal colours at all: it produced a
+second, conflicting palette.
 
-`foot/foot.ini` is a normal config file, not generated: matugen writes only `foot/colors.ini`, which
-foot pulls in with `include`. That directive needs an absolute path, so the shipped file carries
-`@HOME@` and `extras/install.sh` substitutes it.
+foot accepts only `[colors-dark]` and `[colors-light]`, not a plain `[colors]`, and `cursor` takes two
+colours (text background, then the cursor itself). `foot -C` validates the result.
+
+`foot/foot.ini` is a normal config file, not generated. It pulls the colours in with `include`, which
+needs an absolute path, so the shipped file carries `@HOME@` and `extras/install.sh` substitutes it.
 
 foot has no ligatures; `->` and `=>` render as two characters. That is the accepted cost.
 

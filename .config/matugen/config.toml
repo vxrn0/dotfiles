@@ -29,6 +29,3 @@ output_path = '~/.local/state/quickshell/user/generated/color.txt'
 input_path = '~/.config/matugen/templates/wallpaper.txt'
 output_path = '~/.local/state/quickshell/user/generated/wallpaper/path.txt'
 
-[templates.foot]
-input_path = '~/.config/matugen/templates/foot/colors.ini'
-output_path = '~/.config/foot/colors.ini'
