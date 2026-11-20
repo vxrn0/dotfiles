@@ -85,6 +85,7 @@ fn listing(database: &PathBuf) -> Option<String> {
         .args(["-db-path"])
         .arg(database)
         .arg("list")
+        .stderr(Stdio::inherit())
         .output()
     {
         Ok(output) => Some(String::from_utf8_lossy(&output.stdout).into_owned()),

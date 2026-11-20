@@ -52,15 +52,15 @@ pub fn unlock() -> i32 {
         return 1;
     }
 
-    let user = Command::new("whoami")
-        .output()
-        .ok()
-        .map(|output| {
-            String::from_utf8_lossy(&output.stdout)
-                .trim_end_matches('\n')
-                .to_string()
-        })
-        .unwrap_or_default();
+    let user = match Command::new("whoami").stderr(Stdio::inherit()).output() {
+        Ok(output) => String::from_utf8_lossy(&output.stdout)
+            .trim_end_matches('\n')
+            .to_string(),
+        Err(error) => {
+            eprintln!("dots-keyring: cannot run whoami: {error}");
+            String::new()
+        }
+    };
     let _ = Command::new("killall")
         .args(["-q", "-u", &user, "gnome-keyring-daemon"])
         .status();
