@@ -38,9 +38,14 @@ Item { // Player instance
     }
 
     readonly property bool artIsLocalFile: root.lastArtUrl.startsWith("file://") || root.lastArtUrl.startsWith("/")
-    property string displayedArtFilePath: root.artIsLocalFile
-        ? (root.lastArtUrl.startsWith("/") ? "file://" + root.lastArtUrl : root.lastArtUrl)
-        : root.lastGoodArtPath
+    // Cached copy wins over the direct path: Firefox hands out file:///tmp/...
+    // covers and deletes them seconds later, so showing the temp file directly
+    // is exactly the "cover for less than a second" bug.
+    property string displayedArtFilePath: root.lastGoodArtPath.length > 0
+        ? root.lastGoodArtPath
+        : (root.artIsLocalFile
+            ? (root.lastArtUrl.startsWith("/") ? "file://" + root.lastArtUrl : root.lastArtUrl)
+            : "")
 
     function syncProgress() {
         progressAnimation.stop();
@@ -89,6 +94,10 @@ Item { // Player instance
         }
         function onTrackTitleChanged() {
             root.displayPosition = 0;
+            // New track: drop the previous cover so a track without art does not
+            // keep showing it. A mid-track empty artUrl does not change the title,
+            // so the #3580 guard (keep lastArtUrl) still holds.
+            root.lastGoodArtPath = "";
             root.player?.positionChanged();
             syncDebounce.restart();
         }
@@ -106,8 +115,8 @@ Item { // Player instance
             root.artDominantColor = Appearance.m3colors.m3secondaryContainer
             return;
         }
-        if (root.artIsLocalFile)
-            return; // nothing to download
+        // Cache every cover, including local files: a file:// URL can be a temp
+        // file the player deletes right after emitting it.
 
         // Binding does not work in Process
         coverArtDownloader.targetFile = root.lastArtUrl
@@ -121,7 +130,7 @@ Item { // Player instance
         property string targetFile: root.lastArtUrl
         property string artFilePath: root.artFilePath
         // Quote the URL: it comes from the player and could break the shell command.
-        command: [ "bash", "-c", `[ -f "$2" ] || curl -4 -sSL "$1" -o "$2"`, "--", targetFile, artFilePath ]
+        command: [ "bash", "-c", `[ -f "$2" ] || { if [[ "$1" == file://* ]]; then cp -f "${1#file://}" "$2"; else curl -4 -sSL "$1" -o "$2"; fi; }`, "--", targetFile, artFilePath ]
         onExited: (exitCode, exitStatus) => {
             root.downloaded = exitCode === 0
             // Keep the previous cover on screen until the new file is really there.
