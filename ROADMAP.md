@@ -45,9 +45,23 @@ one runs.
 | 2a | `generate_colors_material.py --color` (Material You scheme from a colour) | done | 612/612 cases match the Python reference byte for byte. 0.9 ms against 90 ms. |
 | 2b | `generate_colors_material.py --path` and `scheme_for_image.py` (scheme from an image) | done | 705/705 cases match byte for byte, including 8 real photos, greyscale, 1x1, GIF and a non-image. Links `libturbojpeg` because zune-jpeg decodes up to 8 levels off Pillow, which moves the seed. |
 | 2c | switch `switchwall.sh` and `dots-theme` over to `dots-colors` | outside this zone | the venv can only go after this. |
-| 3 | `images/find_regions.py` (screenshot region detection) | 120 lines Python | low: pure function, testable with fixtures |
+| 3 | `images/find_regions.py` (screenshot region detection) | 120 lines Python | **no reference to match**: the script needs OpenCV, which is not in the venv, so region suggestions have been failing silently for a long time. This phase builds the feature rather than porting it, and is verified structurally on fixtures. |
 | 4 | `thumbnails/thumbgen.py` (GNOME thumbnailer wrapper) | 122 lines Python | low, but it depends on `gi`, not on the venv |
 | 5 | small scripts: `record.sh`, `prune.sh`, `keyring/*`, `applycolor.sh` | ~260 lines | low, one at a time |
+
+## Two features that were dead before the rewrite started
+
+Both fail in the shipped script, which is why "it worked before" is not a safe assumption:
+
+- **Automatic scheme picking** (`colors/scheme_for_image.py`) needs `cv2`, which is not in the venv.
+  `switchwall.sh` pipes it through `2>/dev/null`, gets an empty string, and falls back to the
+  configured `scheme-tonal-spot`. So `auto` never picked anything. Phase 2b fixes this.
+- **Region suggestions** in the screenshot selector (`images/find_regions.py`) needs the same missing
+  `cv2`. The caller wraps the parse in `try`/`catch` and ends up with an empty list, so the feature
+  silently never suggested anything. Phase 3 builds it rather than porting it.
+
+Neither was noticed because both failures were swallowed: one by `2>/dev/null`, the other by a
+`catch` that assigned an empty array.
 
 Known gaps in 2b, all outside the gate because the Python reference is itself broken there: CMYK
 JPEG, 16-bit PNG and greyscale PNG with alpha. The reference reads `pixels[i][2]` out of bounds on
