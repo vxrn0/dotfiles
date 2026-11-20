@@ -215,6 +215,16 @@ Item { // Player instance
                     width: size
                     height: size
                 }
+
+                // The player may send no art at all (e.g. YouTube in Firefox);
+                // show a note instead of an empty grey box.
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    visible: mediaArt.status !== Image.Ready
+                    text: "music_note"
+                    iconSize: 32
+                    color: blendedColors.colOnLayer1
+                }
             }
 
             ColumnLayout { // Info & controls
