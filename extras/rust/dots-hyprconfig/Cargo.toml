@@ -1,0 +1,9 @@
+[package]
+name = "dots-hyprconfig"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 5b Rust replacement for hyprconfigurator.py"
+
+[[bin]]
+name = "dots-hyprconfig"
+path = "src/main.rs"
