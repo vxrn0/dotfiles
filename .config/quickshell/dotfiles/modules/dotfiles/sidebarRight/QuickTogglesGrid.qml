@@ -44,6 +44,9 @@ Item {
                 implicitHeight: 56
                 padding: 14
                 buttonRadius: Appearance.rounding.normal
+                // The default 1.2 s ripple plus its 2.4 s fade left a slow wash over the
+                // tile; a quick toggle should flash and be done.
+                rippleDuration: Appearance.animation.elementMoveFast.duration
                 colBackground: Appearance.colors.colLayer2
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 // Toggled state only changes tone, never hue: neutral surfaces only
