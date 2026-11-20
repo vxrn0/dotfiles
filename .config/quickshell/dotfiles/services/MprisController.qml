@@ -25,6 +25,35 @@ Singleton {
 
 	property var activeTrack;
 
+	// Players like Firefox hand out a temp file and delete it seconds later; copy it
+	// to the same cache the media panel uses, so the bar keeps the cover.
+	Process {
+		id: artCacher
+		property string source: ""
+		property string target: ""
+		property string pending: ""
+		onExited: (exitCode, exitStatus) => {
+			if (exitCode === 0 && root.activeTrack?.artUrl === artCacher.source)
+				root.activeTrack = Object.assign({}, root.activeTrack, { artUrl: "file://" + artCacher.target });
+			if (artCacher.pending !== "") {
+				const next = artCacher.pending;
+				artCacher.pending = "";
+				root.cacheArt(next);
+			}
+		}
+	}
+
+	function cacheArt(src) {
+		if (artCacher.running) {
+			artCacher.pending = src;
+			return;
+		}
+		artCacher.source = src;
+		artCacher.target = Directories.coverArt + "/" + Qt.md5(src);
+		artCacher.command = ["bash", "-c", `[ -f "$2" ] || cp -f "\${1#file://}" "$2"`, "--", src, artCacher.target];
+		artCacher.running = true;
+	}
+
 	readonly property bool hasActivePlasmaIntegration: Mpris.players.values.some(
 		p => p.dbusName?.startsWith('org.mpris.MediaPlayer2.plasma-browser-integration')
 	)
@@ -108,6 +137,8 @@ Singleton {
 		const newArtUrl = this.activePlayer?.trackArtUrl ?? "";
 		const sameTrack = this.activeTrack && this.activePlayer?.uniqueId === this.activeTrack.uniqueId;
 		const artUrl = newArtUrl !== "" ? newArtUrl : (sameTrack ? (this.activeTrack.artUrl ?? "") : "");
+		if ((artUrl.startsWith("file://") || artUrl.startsWith("/")) && !artUrl.includes(Directories.coverArt))
+			this.cacheArt(artUrl);
 		this.activeTrack = {
 			uniqueId: this.activePlayer?.uniqueId ?? 0,
 			artUrl: artUrl,
