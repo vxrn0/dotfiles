@@ -169,6 +169,8 @@ rust="$work/arg-error/rust"
 for dir in "$ref" "$rust"; do mkdir -p "$dir"; done
 run_one "$ref" reference python3 "$reference" --set only-one
 run_one "$rust" rust "$binary" --set only-one
+run_one "$ref" reference python3 "$reference" --set=a 1
+run_one "$rust" rust "$binary" --set=a 1
 if [ "$(cat "$ref/status")" = "$(cat "$rust/status")" ] && [ "$(cat "$rust/status")" = 2 ]; then
     ok arg-error
 else

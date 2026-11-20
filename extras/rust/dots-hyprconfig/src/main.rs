@@ -78,6 +78,9 @@ fn parse_args(args: &[String]) -> Cli {
                 None => argument_error("argument --file: expected one argument"),
             },
             "--set" => {
+                if inline.is_some() {
+                    argument_error("argument --set: expected 2 arguments");
+                }
                 let key = match take(&mut index) {
                     Some(value) => value,
                     None => argument_error("argument --set: expected 2 arguments"),
