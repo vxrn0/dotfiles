@@ -21,6 +21,14 @@ output_path = '~/.config/gtk-3.0/gtk.css'
 input_path = '~/.config/matugen/templates/gtk-4.0/gtk.css'
 output_path = '~/.config/gtk-4.0/gtk.css'
 
+[templates.foot]
+input_path = '~/.config/matugen/templates/foot/colors.ini'
+output_path = '~/.config/foot/colors.ini'
+
+[templates.foot-seq]
+input_path = '~/.config/matugen/templates/foot/sequences.txt'
+output_path = '~/.local/state/quickshell/user/generated/terminal/sequences.txt'
+
 [templates.color]
 input_path = '~/.config/matugen/templates/color.txt'
 output_path = '~/.local/state/quickshell/user/generated/color.txt'

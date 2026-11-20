@@ -83,11 +83,15 @@ input must exit non-zero; a skipped axis is not a pass.
 Kitty was replaced because it is the only thing in the repo that needed Python, and it carried 80 MB
 of dependencies. foot is 812 KB, has no IPC and no Python.
 
-Colours come from `material_colors.scss`, the same source the kitty theme used, so the palette is the
-vivid one and not the muted tonal scheme matugen derives from the wallpaper. `applycolor.sh` renders
-`terminal/foot.ini.template` into `~/.config/foot/colors.ini` and pushes OSC 4/10/11 to every
-`/dev/pts/*` for live recolouring. matugen no longer writes terminal colours at all: it produced a
-second, conflicting palette.
+Colours come from matugen, one source for the whole desktop. The black is `surface`, the sixteen
+palette entries are the same Material roles kitty used, and the seed committed in
+`.config/foot/colors.ini` is the palette of the current wallpaper. `applycolor.sh` only pushes the
+pre-rendered OSC 4/10/11 sequences to every `/dev/pts/*` for live recolouring.
+
+This is the palette kitty actually showed. The old `kitten @ set-colors` push never ran, because
+`allow_remote_control` was not set, so kitty always displayed matugen's `colors.conf`. Reading the
+term scheme from `material_colors.scss` instead produced a vivid purple that has nothing to do with
+the wallpaper.
 
 foot accepts only `[colors-dark]` and `[colors-light]`, not a plain `[colors]`, and `cursor` takes two
 colours (text background, then the cursor itself). `foot -C` validates the result.
@@ -95,7 +99,14 @@ colours (text background, then the cursor itself). `foot -C` validates the resul
 `foot/foot.ini` is a normal config file, not generated. It pulls the colours in with `include`, which
 needs an absolute path, so the shipped file carries `@HOME@` and `extras/install.sh` substitutes it.
 
-foot has no ligatures; `->` and `=>` render as two characters. That is the accepted cost.
+Two accepted costs:
+
+- No ligatures; `->` and `=>` render as two characters.
+- No close animation. foot unmaps its surfaces before destroying the window, so Hyprland snapshots an
+  empty frame and the `windowsOut` animation plays on nothing. This is upstream
+  ([foot #2294](https://codeberg.org/dnkl/foot/issues/2294),
+  [Hyprland #13609](https://github.com/hyprwm/Hyprland/discussions/13609)); there is no config fix.
+  Closing animations work with kitty.
 
 ## Open
 
