@@ -1,0 +1,19 @@
+[package]
+name = "dots-thumbnails"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 4 and 5a Rust replacement for thumbgen.py and generate-thumbnails-magick.sh"
+
+[lib]
+name = "dots_thumbnails"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dots-thumbnails"
+path = "src/main.rs"
+
+[dependencies]
+png = "0.17.16"
+
+[dev-dependencies]
+png = "0.17.16"
