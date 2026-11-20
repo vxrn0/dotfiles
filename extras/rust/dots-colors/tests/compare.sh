@@ -273,7 +273,12 @@ if [ -d "$image_dir" ]; then
 fi
 
 if [ "${#images[@]}" -eq 0 ]; then
-    echo "compare: no images under $image_dir; the image axis was skipped" >&2
+    if [ "${DOTS_COLORS_ALLOW_NO_IMAGES:-0}" = "1" ]; then
+        echo "compare: no images under $image_dir; the image axis was skipped on request" >&2
+    else
+        echo "compare: no images under $image_dir; the image axis cannot be verified" >&2
+        exit 1
+    fi
 else
     for image in "${images[@]}"; do
         label=$(basename "$image")
