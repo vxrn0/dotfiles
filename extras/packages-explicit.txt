@@ -55,6 +55,7 @@ lavat
 lazygit
 lib32-nvidia-utils
 libdbusmenu-gtk3
+libjpeg-turbo
 libnotify
 libva-intel-driver
 libva-nvidia-driver
@@ -68,8 +69,8 @@ mesa-utils
 mpvpaper
 nano
 nautilus
-network-manager-applet
 networkmanager
+network-manager-applet
 nodejs
 npm
 nvidia-open-dkms
