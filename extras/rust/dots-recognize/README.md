@@ -14,7 +14,9 @@ stops at the first non-option.
 The audio device is `<default sink>.monitor` for `monitor`, or the third field
 of `pactl info`'s `Default Source:` line for `input`. An invalid source prints
 `Invalid source type` and exits 1. A missing `songrec`, an empty device, or a
-device not present in `pactl list short sources` also exits 1.
+device not present in `pactl list short sources` also exits 1. The device check
+is a literal substring; the shell used `grep`, so a device name containing
+regex metacharacters could match differently.
 
 `songrec listen --audio-device <dev> --request-interval <n> --json
 --disable-mpris` is started once. Its stdout is read line by line; the first
