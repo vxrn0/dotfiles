@@ -1,0 +1,13 @@
+[package]
+name = "dots-record"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 5c Rust replacement for videos/record.sh"
+
+[[bin]]
+name = "dots-record"
+path = "src/main.rs"
+
+[dependencies]
+libc = "0.2"
+serde_json = { version = "1", features = ["preserve_order"] }
