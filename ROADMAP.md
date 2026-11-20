@@ -48,7 +48,7 @@ one runs.
 | 4 | `thumbnails/thumbgen.py` (GNOME thumbnailer wrapper) | done | 1529 lines Rust. Turned out not to be a separate job: QML calls it first and falls back to the magick script, so one binary serves both dialects. 15/15 cases. |
 | 5a | `thumbnails/generate-thumbnails-magick.sh` | done | same binary as 4 |
 | 5b | `hyprland/hyprconfigurator.py` | done | 337 lines Rust, 28/28 cases, including the Python's own line-regex limits, reproduced on purpose |
-| 5c | `record.sh`, `prune.sh`, `keyring/*`, `applycolor.sh`, `recognize-music.sh`, `material-code-set-color.sh` | done | six crates, 124/124 cases across them |
+| 5c | `record.sh`, `prune.sh`, `keyring/*`, `applycolor.sh`, `recognize-music.sh`, `material-code-set-color.sh` | done | six crates, 119/119 cases across them |
 
 ## Two features that were dead before the rewrite started
 
