@@ -43,18 +43,25 @@ one runs.
 |-------|----------|------|------|
 | 1 | `colors/switchwall.sh` orchestration (matugen calls, monitors, video wallpaper, state files, thumbnails) | 514 lines bash | medium: touches the theme, but only through the same commands |
 | 2a | `generate_colors_material.py --color` (Material You scheme from a colour) | done | 612/612 cases match the Python reference byte for byte. 0.9 ms against 90 ms. |
-| 2b | `generate_colors_material.py --path` (scheme from an image) | Celebi quantisation | still Python; this is what still needs the venv. |
+| 2b | `generate_colors_material.py --path` and `scheme_for_image.py` (scheme from an image) | done | 705/705 cases match byte for byte, including 8 real photos, greyscale, 1x1, GIF and a non-image. Links `libturbojpeg` because zune-jpeg decodes up to 8 levels off Pillow, which moves the seed. |
+| 2c | switch `switchwall.sh` and `dots-theme` over to `dots-colors` | outside this zone | the venv can only go after this. |
 | 3 | `images/find_regions.py` (screenshot region detection) | 120 lines Python | low: pure function, testable with fixtures |
 | 4 | `thumbnails/thumbgen.py` (GNOME thumbnailer wrapper) | 122 lines Python | low, but it depends on `gi`, not on the venv |
 | 5 | small scripts: `record.sh`, `prune.sh`, `keyring/*`, `applycolor.sh` | ~260 lines | low, one at a time |
 
+Known gaps in 2b, all outside the gate because the Python reference is itself broken there: CMYK
+JPEG, 16-bit PNG and greyscale PNG with alpha. The reference reads `pixels[i][2]` out of bounds on
+two-element vectors, so its accent colour changes between runs; the Rust side refuses the file
+instead of guessing.
+
 Order matters: phase 1 removes the most fragile code (bash quoting, silent failures) without needing
-new colour science, and phases 2-3 are what let the venv disappear. `kitty/search.py` is out of scope
+new colour science, and phases 2a-2c are what let the venv disappear. `kitty/search.py` is out of scope
 for good: kitty runs only Python kittens.
 
 Acceptance for every phase: run the old and the new implementation over the same inputs in a sandbox
 with `HOME` and `XDG_*` redirected to a temporary tree, then diff the results. Nothing ships on a
-prose description of "it should work".
+prose description of "it should work". A comparison harness that skips an axis because it found no
+input must exit non-zero; a skipped axis is not a pass.
 
 ## Kitty gets its colours from two places
 
