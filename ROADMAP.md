@@ -16,7 +16,6 @@ Decisions, not ideas. Zones are in `AGENTS.md`.
 |---|------|-------|
 | 4 | Rewrite the backend in Rust | 19 scripts under `.config/quickshell/dotfiles/scripts`, ~1.5k lines: 1,015 bash and 630 Python. Replaces the venv (`numpy`, `cv2`, `PIL`, `materialyoucolor`) with one binary. |
 
-`kitty/search.py` stays Python: kitty only loads kittens written in Python.
 
 ## Decided against
 
@@ -71,22 +70,28 @@ two-element vectors, so its accent colour changes between runs; the Rust side re
 instead of guessing.
 
 Order matters: phase 1 removes the most fragile code (bash quoting, silent failures) without needing
-new colour science, and phases 2a-2c are what let the venv disappear. `kitty/search.py` is out of scope
-for good: kitty runs only Python kittens.
+new colour science, and phases 2a-2c are what let the venv disappear. With kitty replaced by foot there
+is no Python left in the dotfiles at all, so the venv can go entirely.
 
 Acceptance for every phase: run the old and the new implementation over the same inputs in a sandbox
 with `HOME` and `XDG_*` redirected to a temporary tree, then diff the results. Nothing ships on a
 prose description of "it should work". A comparison harness that skips an axis because it found no
 input must exit non-zero; a skipped axis is not a pass.
 
-## Kitty gets its colours from two places
+## The terminal is foot
 
-`~/.config/kitty/colors.conf` is a matugen template: muted colours derived from the wallpaper.
-`~/.local/state/quickshell/user/generated/terminal/kitty-theme.conf` is produced by
-`generate_colors_material.py` plus `applycolor.sh`: vivid colours harmonised from a catppuccin base,
-pushed into running instances with `kitten @ set-colors`. The second wins at runtime, so the terminal
-does not follow the wallpaper palette. That is a design choice nobody has confirmed; phase 2a does
-not change it, it only replaces the implementation.
+Kitty was replaced because it is the only thing in the repo that needed Python, and it carried 80 MB
+of dependencies. foot is 812 KB, has no IPC and no Python.
+
+Live recolouring still works: `applycolor.sh` writes OSC 4/10/11 escape sequences to every
+`/dev/pts/*`, and foot implements those (OSC 4 palette, OSC 10 foreground, OSC 11 background,
+OSC 104 reset). The kitty-specific socket path was removed with the terminal.
+
+`foot/foot.ini` is a normal config file, not generated: matugen writes only `foot/colors.ini`, which
+foot pulls in with `include`. That directive needs an absolute path, so the shipped file carries
+`@HOME@` and `extras/install.sh` substitutes it.
+
+foot has no ligatures; `->` and `=>` render as two characters. That is the accepted cost.
 
 ## Open
 

@@ -52,7 +52,7 @@ fi
 
 for f in \
     "$REPO/.config/hypr/hyprland/colors.lua" \
-    "$REPO/.config/kitty/colors.conf" \
+    "$REPO/.config/foot/colors.ini" \
     "$REPO/extras/dotfiles-config.json" \
     "$REPO/extras/install.sh" \
     "$REPO/.config/hypr/hyprland/scripts/build-dynamic-cursors.sh" \
@@ -182,6 +182,8 @@ for d in "$REPO"/.config/*; do
     [ -e "$HOME/.config/$name" ] && cp -a "$HOME/.config/$name" "$backup/" 2>/dev/null || true
 done
 rsync -a "$REPO/.config/" "$HOME/.config/"
+# foot's include directive needs an absolute path, so the shipped file carries a placeholder
+sed -i "s|@HOME@|$HOME|g" "$HOME/.config/foot/foot.ini"
 rsync -a "$REPO/.local/" "$HOME/.local/"
 if [ ! -f "$HOME/.config/dotfiles/config.json" ] && [ -f "$REPO/extras/dotfiles-config.json" ]; then
     mkdir -p "$HOME/.config/dotfiles"

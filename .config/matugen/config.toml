@@ -29,6 +29,6 @@ output_path = '~/.local/state/quickshell/user/generated/color.txt'
 input_path = '~/.config/matugen/templates/wallpaper.txt'
 output_path = '~/.local/state/quickshell/user/generated/wallpaper/path.txt'
 
-[templates.kitty]
-input_path = '~/.config/matugen/templates/kitty/colors.conf'
-output_path = '~/.config/kitty/colors.conf'
+[templates.foot]
+input_path = '~/.config/matugen/templates/foot/colors.ini'
+output_path = '~/.config/foot/colors.ini'

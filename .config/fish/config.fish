@@ -26,7 +26,4 @@ if status is-interactive
             fish_add_path $HOME/.local/node/bin
         end
     end
-    if test "$TERM" = "xterm-kitty"
-        alias ssh 'kitten ssh'
-    end
 end

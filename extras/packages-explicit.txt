@@ -50,7 +50,7 @@ iverilog
 jdk21-openjdk
 jq
 kaggle-api
-kitty
+foot
 lavat
 lazygit
 lib32-nvidia-utils

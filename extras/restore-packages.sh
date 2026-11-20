@@ -3,7 +3,7 @@
 # metapackages on 2026-11-05. Run as root: sudo ./extras/restore-packages.sh
 #
 # `-Rns` removes dependencies nothing else requires, and the metapackages were the
-# only thing declaring kitty, hyprland, the lock/idle daemons and the screenshot
+# only thing declaring foot, hyprland, the lock/idle daemons and the screenshot
 # tools. The running session keeps working from memory, but a restart without this
 # leaves the machine with no compositor and no terminal.
 set -euo pipefail
@@ -13,7 +13,7 @@ set -euo pipefail
 repo_packages=(
     bc bluez bluez-utils brightnessctl clang cliphist cmake ddcutil eza fish geoclue gnome-keyring
     gtk-layer-shell hypridle hyprland hyprlock hyprpicker hyprshot hyprsunset
-    imagemagick jq kitty matugen rsync songrec starship swappy tesseract
+    imagemagick jq foot matugen rsync songrec starship swappy tesseract
     ttf-jetbrains-mono-nerd uv wf-recorder wget wl-clipboard
     xdg-desktop-portal-hyprland ydotool
 )

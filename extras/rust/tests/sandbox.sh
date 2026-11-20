@@ -104,7 +104,7 @@ EOF
 #!/usr/bin/env bash
 printf '%s\n' "$HOME/Pictures"
 EOF
-    for program in kitty upscayl kdialog zenity; do
+    for program in kitty foot upscayl kdialog zenity; do
         cat > "$bin/$program" <<EOF
 #!/usr/bin/env bash
 printf '$program %s\\n' "\$*" >> "\$DOTS_LOG_DIR/$program.log"
@@ -130,7 +130,7 @@ seed_tree() {
         "$HOME_DIR/.config/hypr/hyprlock" \
         "$HOME_DIR/.config/gtk-3.0" \
         "$HOME_DIR/.config/gtk-4.0" \
-        "$HOME_DIR/.config/kitty" \
+        "$HOME_DIR/.config/foot" \
         "$HOME_DIR/.config/quickshell/dotfiles/scripts"
     cp -a "$COLORS_REPO" "$HOME_DIR/.config/quickshell/dotfiles/scripts/colors"
     cmp -s "$COLORS_REPO/switchwall.sh" \

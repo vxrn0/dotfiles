@@ -280,7 +280,7 @@ hl.config({
         animate_manual_resizes = false,
         animate_mouse_windowdragging = false,
         enable_swallow = false,
-        swallow_regex = "(kitty|alacritty)",
+        swallow_regex = "(kitty|foot)",
         on_focus_under_fullscreen = 2,
         allow_session_lock_restore = true,
         session_lock_xray = true,
