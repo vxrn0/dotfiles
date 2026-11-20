@@ -1,0 +1,9 @@
+[package]
+name = "dots-material-code"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 5c Rust replacement for colors/code/material-code-set-color.sh"
+
+[[bin]]
+name = "dots-material-code"
+path = "src/main.rs"

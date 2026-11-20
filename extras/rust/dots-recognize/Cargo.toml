@@ -1,0 +1,12 @@
+[package]
+name = "dots-recognize"
+version = "0.1.0"
+edition = "2021"
+description = "Phase 5c Rust replacement for musicRecognition/recognize-music.sh"
+
+[[bin]]
+name = "dots-recognize"
+path = "src/main.rs"
+
+[dependencies]
+libc = "0.2"
