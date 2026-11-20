@@ -52,6 +52,10 @@ Item {
                 // Toggled state only changes tone, never hue: neutral surfaces only
                 colBackgroundToggled: Appearance.colors.colLayer3
                 colBackgroundToggledHover: Appearance.colors.colLayer3Hover
+                // The default ripple is colLayer1Active, 85% toward the foreground: on a
+                // layer-2 tile that reads as a white flash. Keep it in the tile's own tone.
+                colRipple: Appearance.colors.colLayer2Active
+                colRippleToggled: Appearance.colors.colLayer3Active
                 toggled: modelData.toggled
                 onClicked: modelData.mainAction()
                 altAction: () => {
