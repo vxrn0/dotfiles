@@ -18,11 +18,11 @@ Item {
     implicitWidth: rowLayout.implicitWidth
     implicitHeight: rowLayout.implicitHeight
 
-    // The panel hangs under this capsule; keep the anchor fresh. One-shot updates go
-    // stale when the bar layout shifts (title width, harness pill), and then the
-    // panel opens offset from the capsule.
+    // The panel is centered under this capsule, whose width follows the track title,
+    // so the anchor has to follow too. One-shot updates go stale when the bar layout
+    // shifts and the panel then opens offset from the capsule.
     function updateAnchor() {
-        GlobalStates.mediaControlsAnchorX = root.mapToItem(null, 0, 0).x;
+        GlobalStates.mediaControlsAnchorX = root.mapToItem(null, 0, 0).x + root.width / 2;
     }
     Component.onCompleted: updateAnchor()
     onXChanged: updateAnchor()

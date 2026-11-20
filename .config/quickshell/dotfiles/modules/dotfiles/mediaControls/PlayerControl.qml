@@ -25,9 +25,6 @@ Item { // Player instance
     property color artDominantColor: ColorUtils.mix((colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary), Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
     property bool downloaded: false
     property real radius
-    // MPRIS position is only re-read on demand; animate it locally so the bar is smooth.
-    property real displayPosition: 0
-    property double seekGuardUntil: 0
     // Some streams report a bogus length (YouTube sends ~2^63 ns); treat it as unknown.
     readonly property real length: (root.player?.length > 0 && root.player.length < 86400)
         ? root.player.length : 0
@@ -47,67 +44,40 @@ Item { // Player instance
             ? (root.lastArtUrl.startsWith("/") ? "file://" + root.lastArtUrl : root.lastArtUrl)
             : "")
 
-    function syncProgress() {
-        progressAnimation.stop();
+    // MPRIS sends no position signal; sample it often enough for the bar to move
+    // smoothly. Quickshell extrapolates position between the player's own updates,
+    // so a local read is cheap and already correct.
+    property real displayPosition: 0
+    property bool seeking: false
+
+    function syncPosition() {
         root.displayPosition = Math.max(0, root.player?.position ?? 0);
-        if (root.player?.isPlaying && root.length > root.displayPosition) {
-            progressAnimation.from = root.displayPosition;
-            progressAnimation.to = root.length;
-            progressAnimation.duration = (root.length - root.displayPosition) * 1000;
-            progressAnimation.start();
-        }
-    }
-
-    NumberAnimation {
-        id: progressAnimation
-        target: root
-        property: "displayPosition"
-        easing.type: Easing.Linear
-    }
-
-    Timer { // Periodic MPRIS resync; the animation keeps the bar smooth in between
-        running: root.player?.playbackState == MprisPlaybackState.Playing
-        interval: 10000
-        repeat: true
-        onTriggered: {
-            root.player.positionChanged();
-            syncDebounce.restart();
-        }
     }
 
     Timer {
-        id: syncDebounce
-        interval: 200
-        onTriggered: {
-            if (Date.now() >= root.seekGuardUntil)
-                root.syncProgress();
-        }
+        running: (root.player?.isPlaying ?? false) && !root.seeking
+        interval: 100
+        repeat: true
+        onTriggered: root.syncPosition()
     }
 
     Connections {
         target: root.player
-        function onPositionChanged() { syncDebounce.restart(); }
-        function onLengthChanged() { syncDebounce.restart(); }
-        function onIsPlayingChanged() {
-            root.player?.positionChanged();
-            syncDebounce.restart();
-        }
-        function onTrackTitleChanged() {
-            root.displayPosition = 0;
-            // New track: drop the previous cover so a track without art does not
-            // keep showing it. A mid-track empty artUrl does not change the title,
-            // so the #3580 guard (keep lastArtUrl) still holds.
+        function onPositionChanged() { root.syncPosition() }
+        function onIsPlayingChanged() { root.syncPosition() }
+        // New track: drop the previous cover so a track without art does not keep
+        // showing it. A mid-track empty artUrl does not change the track, so the
+        // #3580 guard (keep lastArtUrl) still holds.
+        function onTrackChanged() {
             root.lastGoodArtPath = "";
-            root.player?.positionChanged();
-            syncDebounce.restart();
+            root.syncPosition();
         }
     }
 
     Component.onCompleted: {
         if (root.artUrl)
             root.lastArtUrl = root.artUrl;
-        root.player?.positionChanged();
-        root.syncProgress();
+        root.syncPosition();
     }
 
     onArtFilePathChanged: {
@@ -130,7 +100,7 @@ Item { // Player instance
         property string targetFile: root.lastArtUrl
         property string artFilePath: root.artFilePath
         // Quote the URL: it comes from the player and could break the shell command.
-        command: [ "bash", "-c", `[ -f "$2" ] || { if [[ "$1" == file://* ]]; then cp -f "${1#file://}" "$2"; else curl -4 -sSL "$1" -o "$2"; fi; }`, "--", targetFile, artFilePath ]
+        command: [ "bash", "-c", `[ -f "$2" ] || { if [[ "$1" == file://* ]]; then cp -f "\${1#file://}" "$2"; else curl -4 -sSL "$1" -o "$2"; fi; }`, "--", targetFile, artFilePath ]
         onExited: (exitCode, exitStatus) => {
             root.downloaded = exitCode === 0
             // Keep the previous cover on screen until the new file is really there.
@@ -306,12 +276,15 @@ Item { // Player instance
                                     trackColor: blendedColors.colSecondaryContainer
                                     handleColor: blendedColors.colPrimary
                                     value: root.length > 0 ? root.displayPosition / root.length : 0
+                                    onPressedChanged: {
+                                        root.seeking = pressed;
+                                        if (!pressed)
+                                            root.syncPosition();
+                                    }
                                     onMoved: {
                                         if (root.length > 0) {
                                             root.displayPosition = value * root.length;
                                             root.player.position = root.displayPosition;
-                                            root.seekGuardUntil = Date.now() + 1000;
-                                            root.syncProgress();
                                         }
                                     }
                                 }

@@ -109,14 +109,14 @@ Scope {
             }
             margins {
                 top: Appearance.sizes.barHeight
-                // Left edge under the bar's media capsule, clamped to the screen.
+                // Centered under the bar's media capsule, clamped to the screen.
                 left: {
-                    const anchorX = GlobalStates.mediaControlsAnchorX >= 0
+                    const centerX = GlobalStates.mediaControlsAnchorX >= 0
                         ? GlobalStates.mediaControlsAnchorX
-                        : (panelWindow.screen.width - root.widgetWidth) / 2;
+                        : panelWindow.screen.width / 2;
                     return Math.max(Appearance.sizes.hyprlandGapsOut, Math.min(
                         panelWindow.screen.width - root.widgetWidth - Appearance.sizes.hyprlandGapsOut,
-                        anchorX
+                        centerX - root.widgetWidth / 2
                     ));
                 }
             }
