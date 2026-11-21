@@ -55,6 +55,9 @@ Every commit has the same author, so put the zone in the subject (`hypr:`, `pilo
 - `hyprland/scripts/build-dynamic-cursors.sh` rebuilds the cursor plugin.
   `hyprland/scripts/ensure-dynamic-cursors.sh` loads it at login and rebuilds it first when
   Hyprland was updated, because the ABI check rejects the old build.
+- `extras/foot/build.sh` builds foot with the local close-animation patch and installs it to
+  `~/.local/bin/foot`. Re-run it after every foot update. The patch is local because foot forbids
+  AI-assisted contributions.
 
 ## Verify
 

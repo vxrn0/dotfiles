@@ -99,14 +99,22 @@ colours (text background, then the cursor itself). `foot -C` validates the resul
 `foot/foot.ini` is a normal config file, not generated. It pulls the colours in with `include`, which
 needs an absolute path, so the shipped file carries `@HOME@` and `extras/install.sh` substitutes it.
 
-Two accepted costs:
+One accepted cost:
 
 - No ligatures; `->` and `=>` render as two characters.
-- No close animation. foot unmaps its surfaces before destroying the window, so Hyprland snapshots an
-  empty frame and the `windowsOut` animation plays on nothing. This is upstream
-  ([foot #2294](https://codeberg.org/dnkl/foot/issues/2294),
-  [Hyprland #13609](https://github.com/hyprwm/Hyprland/discussions/13609)); there is no config fix.
-  Closing animations work with kitty.
+
+The missing close animation is fixed locally. foot attaches a NULL buffer before destroying the
+window, so Hyprland snapshots an empty frame and `windowsOut` animates nothing
+([foot #2294](https://codeberg.org/dnkl/foot/issues/2294),
+[Hyprland #13609](https://github.com/hyprwm/Hyprland/discussions/13609)). `extras/foot/` holds a
+seven-line patch that drops the detach and a build script; `~/.local/bin/foot` shadows the packaged
+binary. Re-run `extras/foot/build.sh` after `pacman -Syu` updates foot; a build takes about ten
+seconds from scratch and five from a warm cache. If the patch stops applying, check foot first: the
+fix may have landed upstream.
+
+The patch stays local on purpose: foot forbids AI-assisted contributions of any kind, so nothing is
+sent to its issue tracker.
+
 
 ## Open
 

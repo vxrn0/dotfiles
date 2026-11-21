@@ -1,0 +1,41 @@
+From 17d4d717ec41ee1483d18b4964484e8ba030a1dc Mon Sep 17 00:00:00 2001
+From: vxrn <vxrn@tutamail.com>
+Date: Sat, 21 Nov 2026 13:04:53 +0500
+Subject: [PATCH] Keep the window mapped until the surface is destroyed
+
+Attaching a NULL buffer unmaps the surface while the xdg-toplevel still
+exists.  Compositors that animate window closing (Hyprland's windowsOut)
+take the window snapshot on unmap, so they snapshot an empty frame and
+the close animation runs on nothing.
+
+The surface is destroyed a few lines below, and its buffers are released
+by the compositor at that point, so there is nothing to free early.
+---
+ wayland.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/wayland.c b/wayland.c
+index f15c168..c7b5220 100644
+--- a/wayland.c
++++ b/wayland.c
+@@ -2297,10 +2297,14 @@
+ 
+     wayl_roundtrip(win->term->wl);
+ 
+-        /* Main window */
++    /* Main window
++     *
++     * Don't attach a NULL buffer here. That unmaps the surface while the
++     * toplevel still exists, and compositors that animate window closing
++     * snapshot the window on unmap: they get an empty frame, so the
++     * animation plays on nothing. The surface is destroyed just below, and
++     * the compositor releases its buffers at that point. */
+     win->unmapped = true;
+-    wl_surface_attach(win->surface.surf, NULL, 0, 0);
+-    wl_surface_commit(win->surface.surf);
+     wayl_roundtrip(win->term->wl);
+ 
+     tll_free(win->on_outputs);
+-- 
+2.52.0
+
