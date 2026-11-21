@@ -3,7 +3,7 @@
 Personal XDG config for a Hyprland + Quickshell desktop on Arch. The shell is called `dotfiles`.
 Plain files. Derived from dots-hyprland; see `README.md` for credit and license.
 
-`ROADMAP.md` holds what is decided and what is still open.
+`docs/ROADMAP.md` holds what is decided and what is still open.
 
 Install: `git clone <repo> ~/dotfiles && ~/dotfiles/extras/install.sh`
 (`--check` = preflight only, `--dry-run` = plan; `extras/verify.sh` checks the result).
