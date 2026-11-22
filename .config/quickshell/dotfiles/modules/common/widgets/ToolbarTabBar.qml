@@ -89,8 +89,10 @@ Item {
 
     // TabBar doesn't allow tabs to be of different sizes. That's what I thought...
     // We use it only for the logic and draw stuff manually
+    // Hidden: its stock indicator draws a Material-pink line; activeIndicator is ours.
     TabBar {
         id: tabBar
+        visible: false
         z: -1
         background: null
         Repeater {
