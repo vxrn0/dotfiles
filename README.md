@@ -2,7 +2,7 @@
 
 [![Built with OpenCode](https://opencode.ai/brand/badges/opencode-built-with-f-light-20.svg)](https://opencode.ai)
 
-<img src=".github/preview-rounded.webp" alt="Hyprland + Quickshell desktop">
+<img src=".github/preview.webp" alt="Hyprland + Quickshell desktop">
 
 **Under development. Not tested.**
 
